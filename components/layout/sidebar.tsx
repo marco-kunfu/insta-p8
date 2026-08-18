@@ -62,23 +62,18 @@ export function Sidebar({ className, username = "creator", profilePic, onLogout,
               href={href}
               onClick={onNavigate}
               aria-current={active ? "page" : undefined}
+              // Measured on business.kunfupay.com: the active row is solid
+              // #734bfc with white text, 9px radius, 14px/600 — not a gradient
+              // chip and not a soft tint. MORFEO.md's icon-above-label gradient
+              // describes their mobile bottom-nav, not this sidebar.
               className={cn(
-                "flex items-center gap-3 px-3 py-2 rounded-md text-[13px] transition-colors relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring",
+                "flex items-center gap-3 px-3 py-2 rounded-[9px] text-sm transition-colors relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring",
                 active
-                  ? "text-sidebar-foreground bg-sidebar-accent font-medium"
+                  ? "bg-primary text-primary-foreground font-semibold"
                   : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/60",
               )}
             >
-              <span
-                className={cn(
-                  "flex h-7 w-7 shrink-0 items-center justify-center rounded-md transition-colors",
-                  active
-                    ? "bg-gradient-to-br from-primary to-primary-active text-white shadow-sm"
-                    : "text-sidebar-foreground/70",
-                )}
-              >
-                <Icon className="w-4 h-4" strokeWidth={active ? 2.2 : 1.8} />
-              </span>
+              <Icon className="w-4 h-4 shrink-0" strokeWidth={active ? 2.2 : 1.8} />
               <span>{label}</span>
             </Link>
           )
