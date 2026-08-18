@@ -749,14 +749,20 @@ export function CreateRuleForm({ userId, triggerSource, onSuccess, editRule }: C
                                   className="h-8 min-w-0 flex-1 rounded-lg border border-border bg-card px-2.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50"
                                   placeholder="Button label"
                                 />
-                                <select
-                                  value={btn.type}
-                                  onChange={(e) => updateButton(btn.id, "type", e.target.value)}
-                                  className="h-8 shrink-0 rounded-lg border border-border bg-card pl-2.5 pr-7 text-xs text-foreground focus:outline-none focus:border-primary/50"
-                                >
-                                  <option value="web_url">Open link</option>
-                                  <option value="postback">Trigger flow</option>
-                                </select>
+                                {/* appearance-none because padding cannot move a native
+                                    select's arrow — the browser pins it to the edge. Our
+                                    own chevron sits where Morfeo would put it. */}
+                                <div className="relative shrink-0">
+                                  <select
+                                    value={btn.type}
+                                    onChange={(e) => updateButton(btn.id, "type", e.target.value)}
+                                    className="h-8 w-full appearance-none rounded-lg border border-border bg-card pl-2.5 pr-8 text-xs text-foreground focus:outline-none focus:border-primary/50"
+                                  >
+                                    <option value="web_url">Open link</option>
+                                    <option value="postback">Trigger flow</option>
+                                  </select>
+                                  <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                                </div>
                                 <button type="button" onClick={() => removeButton(btn.id)} aria-label="Remove button"
                                   className="shrink-0 p-1.5 text-muted-foreground transition-colors hover:text-destructive">
                                   <Trash2 className="w-4 h-4" />
