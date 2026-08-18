@@ -4,6 +4,7 @@ import { Plus_Jakarta_Sans, Roboto_Mono } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
 import { Toaster } from "@/components/ui/sonner"
+import { BRAND, THEME_STORAGE_KEY } from "@/lib/brand"
 import { ThemeProvider } from "@/components/theme-provider"
 
 // Morfeo's faces. The previous Geist instances were assigned to unused
@@ -20,31 +21,19 @@ const robotoMono = Roboto_Mono({
 })
 
 export const metadata: Metadata = {
-  title: "InstaAuto — Instagram Automation",
-  description: "Auto-reply to comments, DMs, and stories with keyword triggers.",
+  title: `${BRAND.name} — ${BRAND.tagline}`,
+  description: BRAND.description,
+  // SVG only: the previous PNG set is the upstream fork's mark. Drop in
+  // Kunfupay's own raster exports (32px, apple-touch) when they exist.
   icons: {
-    icon: [
-      {
-        url: "/icon-light-32x32.png",
-        media: "(prefers-color-scheme: light)",
-      },
-      {
-        url: "/icon-dark-32x32.png",
-        media: "(prefers-color-scheme: dark)",
-      },
-      {
-        url: "/icon.svg",
-        type: "image/svg+xml",
-      },
-    ],
-    apple: "/apple-icon.png",
+    icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
   },
 }
 
 const themeBootstrap = `
 (function() {
   try {
-    var stored = window.localStorage.getItem('insta-p8-theme');
+    var stored = window.localStorage.getItem('${THEME_STORAGE_KEY}');
     var theme = (stored === 'light' || stored === 'dark' || stored === 'system') ? stored : 'light';
     var resolved = theme === 'system'
       ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')

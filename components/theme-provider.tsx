@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { THEME_STORAGE_KEY as STORAGE_KEY } from "@/lib/brand"
 
 type Theme = "light" | "dark" | "system"
 
@@ -13,7 +14,6 @@ type ThemeContextValue = {
 
 const ThemeContext = React.createContext<ThemeContextValue | null>(null)
 
-const STORAGE_KEY = "insta-p8-theme"
 
 /**
  * Apply the resolved theme to <html>. We toggle the .dark class and set

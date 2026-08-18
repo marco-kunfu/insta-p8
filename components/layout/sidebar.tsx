@@ -4,11 +4,12 @@ import type React from "react"
 import { cn } from "@/lib/utils"
 import {
   Zap, LayoutDashboard, LogOut, Settings, BarChart3,
-  MessageSquare, Snowflake, Send,
+  MessageSquare, Snowflake,
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { BRAND } from "@/lib/brand"
 
 /**
  * Analytics and Settings are placeholder screens that only say "Coming Soon".
@@ -42,10 +43,10 @@ export function Sidebar({ className, username = "creator", profilePic, onLogout,
     <aside className={cn("flex flex-col bg-sidebar text-sidebar-foreground", className)} {...props}>
       {/* Brand + Theme Toggle */}
             <div className="px-5 pt-6 pb-5 flex items-center gap-2.5">
-              <div className="w-7 h-7 bg-accent-yellow text-white rounded-md flex items-center justify-center shrink-0">
+              <div className="morfeo-avatar-gradient w-7 h-7 text-white rounded-md flex items-center justify-center shrink-0">
                 <Zap className="w-3.5 h-3.5" strokeWidth={2.5} />
               </div>
-              <span className="font-mono-ui text-sm font-bold tracking-tight text-sidebar-foreground flex-1">insta-p8</span>
+              <span className="font-mono-ui text-sm font-bold tracking-tight text-sidebar-foreground flex-1">{BRAND.name}</span>
               <ThemeToggle />
             </div>
 
@@ -68,44 +69,21 @@ export function Sidebar({ className, username = "creator", profilePic, onLogout,
                   : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/60",
               )}
             >
-              {active && <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-4 rounded-full bg-accent-yellow" />}
-              <Icon className={cn("w-4 h-4 shrink-0", active ? "text-accent-yellow" : "")} strokeWidth={active ? 2.2 : 1.8} />
+              <span
+                className={cn(
+                  "flex h-7 w-7 shrink-0 items-center justify-center rounded-md transition-colors",
+                  active
+                    ? "bg-gradient-to-br from-primary to-primary-active text-white shadow-sm"
+                    : "text-sidebar-foreground/70",
+                )}
+              >
+                <Icon className="w-4 h-4" strokeWidth={active ? 2.2 : 1.8} />
+              </span>
               <span>{label}</span>
             </Link>
           )
         })}
 
-        <div className="pt-5 pb-1 px-3">
-          <div className="h-px bg-sidebar-border" />
-        </div>
-
-        {SHOW_PLACEHOLDER_PAGES && (
-        <Link
-          href="/dashboard/settings"
-          onClick={onNavigate}
-          aria-current={pathname === "/dashboard/settings" ? "page" : undefined}
-          className={cn(
-            "flex items-center gap-3 px-3 py-2 rounded-md text-[13px] transition-colors relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring",
-            pathname === "/dashboard/settings"
-              ? "text-sidebar-foreground bg-sidebar-accent font-medium"
-              : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/60",
-          )}
-        >
-          {pathname === "/dashboard/settings" && <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-4 rounded-full bg-accent-yellow" />}
-          <Settings className="w-4 h-4 shrink-0" strokeWidth={1.8} />
-          <span>Settings</span>
-        </Link>
-        )}
-
-        <a
-          href="https://t.me/instagramautomationp8"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-3 px-3 py-2 rounded-md text-[13px] text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/60 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
-        >
-          <Send className="w-4 h-4 shrink-0" strokeWidth={1.8} />
-          <span>Get help</span>
-        </a>
       </nav>
 
       {/* Account */}

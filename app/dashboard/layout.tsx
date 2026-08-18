@@ -3,6 +3,7 @@
 import { Sidebar } from "@/components/layout/sidebar"
 import { MobileNav } from "@/components/layout/mobile-nav"
 import { useInstagramSession } from "@/hooks/use-instagram-session"
+import { BRAND } from "@/lib/brand"
 import { Loader2 } from "lucide-react"
 
 export default function DashboardLayout({
@@ -36,7 +37,7 @@ export default function DashboardLayout({
             <div className="flex-1 flex flex-col md:pl-64 transition-all duration-300">
                 {/* Mobile Header (Visible only on small screens) */}
                 <header className="md:hidden h-16 border-b border-border bg-background flex items-center justify-between px-4 sticky top-0 z-40">
-                    <span className="font-serif-display text-xl text-foreground">insta-p8</span>
+                    <span className="font-serif-display text-xl text-foreground">{BRAND.name}</span>
                     <MobileNav username={username || "User"} profilePic={profilePic} onLogout={logout} />
                 </header>
 
