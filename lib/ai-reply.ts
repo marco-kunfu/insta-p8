@@ -3,6 +3,15 @@ const OPENAI_URL = "https://api.openai.com/v1/chat/completions"
 const XAI_URL = "https://api.x.ai/v1/chat/completions"
 
 /**
+ * Shared by the send path and the diagnostic so they cannot drift: a
+ * diagnostic on a different budget either passes when production fails or
+ * fails when production passes. Both have happened. Reasoning models spend
+ * most of this thinking before they write, and reply length is governed by
+ * the prompt, not by this ceiling.
+ */
+const MAX_TOKENS = 400
+
+/**
  * Which provider a key belongs to, read off the key itself. Groq issues
  * `gsk_…`, OpenAI `sk-…`.
  *
@@ -79,11 +88,7 @@ export async function generateAIReply(
           { role: "system", content: systemPrompt },
           { role: "user", content: userMessage },
         ],
-        // 150 was sized for a model that answers directly. Reasoning models
-        // spend most of it thinking — a one-line reply measured 77 tokens, so a
-        // longer question would exhaust the budget and come back empty. The
-        // prompt is what keeps replies short, not this ceiling.
-        max_tokens: 400,
+        max_tokens: MAX_TOKENS,
         temperature: 0.7,
       }),
     })
@@ -166,14 +171,11 @@ export async function diagnoseAIReply(
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
       body: JSON.stringify({
         model,
-        // Same budget the send path uses. A diagnostic on a smaller budget
-        // would pass while production came back empty: reasoning models spend
-        // tokens thinking before they write anything.
         messages: [
           { role: "system", content: "You reply to Instagram DMs in one short sentence." },
           { role: "user", content: "hola, tienen clases este fin de semana?" },
         ],
-        max_tokens: 150,
+        max_tokens: MAX_TOKENS,
       }),
     })
     if (!res.ok) {
