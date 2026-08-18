@@ -33,9 +33,23 @@ CREATE TABLE IF NOT EXISTS public.users (
   page_id TEXT,
   groq_auto_reply_enabled BOOLEAN DEFAULT FALSE,
   ai_context TEXT DEFAULT NULL,
+  -- Per-user AI overrides. Left NULL on purpose: lib/ai-reply.ts falls back to
+  -- GROQ_API_KEY / AI_BASE_URL / AI_MODEL from the environment when these are
+  -- empty, and a column DEFAULT would shadow that chain.
+  groq_api_key TEXT DEFAULT NULL,
+  ai_base_url TEXT DEFAULT NULL,
+  ai_model TEXT DEFAULT NULL,
   created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
+
+-- The three columns above were missing from upstream's schema even though
+-- app/api/groq/auto-reply and the webhook read and write them, so any database
+-- created before this fix lacks them. CREATE TABLE IF NOT EXISTS won't add
+-- columns to a table that already exists — these ALTERs heal those databases.
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS groq_api_key TEXT DEFAULT NULL;
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS ai_base_url TEXT DEFAULT NULL;
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS ai_model TEXT DEFAULT NULL;
 
 -- ==========================================
 -- 2. Table: public.conversations
@@ -220,29 +234,19 @@ CREATE INDEX IF NOT EXISTS idx_unlock_attempts_updated ON public.unlock_attempts
 -- Storage Bucket: reels
 -- ==========================================
 INSERT INTO storage.buckets (id, name, public)
-VALUES ('reels', 'reels', true)
-ON CONFLICT (id) DO UPDATE SET public = true;
+VALUES ('reels', 'reels', false)
+ON CONFLICT (id) DO UPDATE SET public = false;
 
--- Drop storage policies if they exist to prevent duplicates
+-- Upstream granted INSERT, SELECT and DELETE on this bucket TO public, gated
+-- only on `bucket_id = 'reels'`. `public` includes `anon`, and the anon key ships
+-- to the browser in every page load, so that let anyone upload arbitrary files
+-- to the bucket and delete anything in it. No code path uses Supabase Storage
+-- (no `storage.from()` or `.upload()` anywhere), so the policies are dropped
+-- rather than narrowed. Server-side access still works: the service-role key
+-- bypasses RLS. Re-add scoped policies here if direct client uploads land.
 DROP POLICY IF EXISTS "Public Uploads" ON storage.objects;
 DROP POLICY IF EXISTS "Public Viewing" ON storage.objects;
 DROP POLICY IF EXISTS "Public Deletion" ON storage.objects;
-
--- Create policies for storage
-CREATE POLICY "Public Uploads"
-ON storage.objects FOR INSERT
-TO public
-WITH CHECK (bucket_id = 'reels');
-
-CREATE POLICY "Public Viewing"
-ON storage.objects FOR SELECT
-TO public
-USING (bucket_id = 'reels');
-
-CREATE POLICY "Public Deletion"
-ON storage.objects FOR DELETE
-TO public
-USING (bucket_id = 'reels');
 
 -- =========================================================================
 -- SECURITY: Row Level Security (RLS) for public schema tables
