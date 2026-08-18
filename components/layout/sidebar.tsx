@@ -3,12 +3,11 @@
 import type React from "react"
 import { cn } from "@/lib/utils"
 import {
-  Zap, LayoutDashboard, LogOut, Settings, BarChart3,
+  Zap, LayoutDashboard, Settings, BarChart3,
   MessageSquare, Snowflake,
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { ThemeToggle } from "@/components/theme-toggle"
 import { BRAND } from "@/lib/brand"
 
 /**
@@ -41,13 +40,12 @@ export function Sidebar({ className, username = "creator", profilePic, onLogout,
 
   return (
     <aside className={cn("flex flex-col bg-sidebar text-sidebar-foreground", className)} {...props}>
-      {/* Brand + Theme Toggle */}
+      {/* Brand */}
             <div className="px-5 pt-6 pb-5 flex items-center gap-2.5">
               <div className="morfeo-avatar-gradient w-7 h-7 text-white rounded-md flex items-center justify-center shrink-0">
                 <Zap className="w-3.5 h-3.5" strokeWidth={2.5} />
               </div>
               <span className="font-mono-ui text-sm font-bold tracking-tight text-sidebar-foreground flex-1">{BRAND.name}</span>
-              <ThemeToggle />
             </div>
 
             <div className="mx-5 h-px bg-sidebar-border" />
@@ -81,33 +79,6 @@ export function Sidebar({ className, username = "creator", profilePic, onLogout,
 
       </nav>
 
-      {/* Account */}
-      <div className="px-3 pb-4">
-        <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg border border-sidebar-border group">
-          <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-500 p-[1.5px] shrink-0">
-            <div className="w-full h-full rounded-full bg-sidebar flex items-center justify-center overflow-hidden">
-              {profilePic ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={profilePic} alt={username} className="w-full h-full rounded-full object-cover" />
-              ) : (
-                <span className="text-[10px] font-bold text-sidebar-foreground">{username.charAt(0).toUpperCase()}</span>
-              )}
-            </div>
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-xs text-sidebar-foreground truncate">@{username}</p>
-            <p className="morfeo-eyebrow text-sidebar-foreground/60">connected</p>
-          </div>
-          <button
-            onClick={onLogout}
-            title="Log out"
-            aria-label="Log out"
-            className="p-1.5 rounded-md text-sidebar-foreground/60 hover:text-destructive hover:bg-destructive/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
-          >
-            <LogOut className="w-3.5 h-3.5" />
-          </button>
-        </div>
-      </div>
     </aside>
   )
 }
