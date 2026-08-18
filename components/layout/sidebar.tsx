@@ -10,13 +10,22 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { ThemeToggle } from "@/components/theme-toggle"
 
+/**
+ * Analytics and Settings are placeholder screens that only say "Coming Soon".
+ * They are hidden from navigation rather than deleted — the routes and their
+ * pages stay in the codebase, so flipping this to `true` brings them back.
+ */
+const SHOW_PLACEHOLDER_PAGES = false
+
 const NAV = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Overview" },
   { href: "/dashboard/automations", icon: Zap, label: "Automations" },
   { href: "/dashboard/inbox", icon: MessageSquare, label: "Inbox" },
   { href: "/dashboard/ice-breakers", icon: Snowflake, label: "Ice breakers" },
-  { href: "/dashboard/analytics", icon: BarChart3, label: "Analytics" },
+  { href: "/dashboard/analytics", icon: BarChart3, label: "Analytics", placeholder: true },
 ]
+
+const VISIBLE_NAV = NAV.filter((item) => SHOW_PLACEHOLDER_PAGES || !item.placeholder)
 
 interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {
   username?: string
@@ -33,7 +42,7 @@ export function Sidebar({ className, username = "creator", profilePic, onLogout,
     <aside className={cn("flex flex-col bg-sidebar text-sidebar-foreground", className)} {...props}>
       {/* Brand + Theme Toggle */}
             <div className="px-5 pt-6 pb-5 flex items-center gap-2.5">
-              <div className="w-7 h-7 bg-accent-yellow text-accent-yellow-foreground rounded-md flex items-center justify-center shrink-0">
+              <div className="w-7 h-7 bg-accent-yellow text-white rounded-md flex items-center justify-center shrink-0">
                 <Zap className="w-3.5 h-3.5" strokeWidth={2.5} />
               </div>
               <span className="font-mono-ui text-sm font-bold tracking-tight text-sidebar-foreground flex-1">insta-p8</span>
@@ -44,7 +53,7 @@ export function Sidebar({ className, username = "creator", profilePic, onLogout,
 
       {/* Nav */}
       <nav className="flex-1 px-3 py-4 space-y-0.5">
-        {NAV.map(({ href, icon: Icon, label }) => {
+        {VISIBLE_NAV.map(({ href, icon: Icon, label }) => {
           const active = pathname === href
           return (
             <Link
@@ -70,6 +79,7 @@ export function Sidebar({ className, username = "creator", profilePic, onLogout,
           <div className="h-px bg-sidebar-border" />
         </div>
 
+        {SHOW_PLACEHOLDER_PAGES && (
         <Link
           href="/dashboard/settings"
           onClick={onNavigate}
@@ -85,6 +95,7 @@ export function Sidebar({ className, username = "creator", profilePic, onLogout,
           <Settings className="w-4 h-4 shrink-0" strokeWidth={1.8} />
           <span>Settings</span>
         </Link>
+        )}
 
         <a
           href="https://t.me/instagramautomationp8"
