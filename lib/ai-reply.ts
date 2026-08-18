@@ -12,6 +12,17 @@ const XAI_URL = "https://api.x.ai/v1/chat/completions"
 const MAX_TOKENS = 400
 
 /**
+ * Shared so the diagnostic exercises the prompt production actually sends.
+ * It used to build its own, which meant a test could pass while the real
+ * system prompt — and the account's own instructions — went unexercised.
+ */
+export function buildSystemPrompt(aiContext?: string | null): string {
+  return aiContext?.trim()
+    ? `You are replying to Instagram DMs on behalf of this account: ${aiContext.trim()}\n\nRules: max 1 sentence, casual Instagram tone, no hashtags, no emojis unless natural, never reveal you are AI. If you don't know something specific, say you'll get back to them.`
+    : "You are replying to Instagram DMs. Keep replies to 1 short sentence. Casual tone. No hashtags. Never reveal you are AI."
+}
+
+/**
  * Which provider a key belongs to, read off the key itself. Groq issues
  * `gsk_…`, OpenAI `sk-…`.
  *
@@ -74,9 +85,6 @@ export async function generateAIReply(
   const endpoint = resolveEndpoint(userBaseUrl, provider)
   const model = userModel || process.env.AI_MODEL || DEFAULT_MODELS[provider]
 
-  const systemPrompt = aiContext?.trim()
-    ? `You are replying to Instagram DMs on behalf of this account: ${aiContext.trim()}\n\nRules: max 1 sentence, casual Instagram tone, no hashtags, no emojis unless natural, never reveal you are AI. If you don't know something specific, say you'll get back to them.`
-    : "You are replying to Instagram DMs. Keep replies to 1 short sentence. Casual tone. No hashtags. Never reveal you are AI."
 
   try {
     const res = await fetch(endpoint, {
@@ -85,7 +93,7 @@ export async function generateAIReply(
       body: JSON.stringify({
         model,
         messages: [
-          { role: "system", content: systemPrompt },
+          { role: "system", content: buildSystemPrompt(aiContext) },
           { role: "user", content: userMessage },
         ],
         max_tokens: MAX_TOKENS,
@@ -147,6 +155,8 @@ export async function diagnoseAIReply(
   userApiKey?: string | null,
   userBaseUrl?: string | null,
   userModel?: string | null,
+  aiContext?: string | null,
+  probe = "hola, tienen clases este fin de semana?",
 ): Promise<AIDiagnostics> {
   const apiKey = userApiKey || process.env.GROQ_API_KEY || process.env.OPENAI_API_KEY
   const keySource: AIDiagnostics["keySource"] = userApiKey
@@ -172,8 +182,8 @@ export async function diagnoseAIReply(
       body: JSON.stringify({
         model,
         messages: [
-          { role: "system", content: "You reply to Instagram DMs in one short sentence." },
-          { role: "user", content: "hola, tienen clases este fin de semana?" },
+          { role: "system", content: buildSystemPrompt(aiContext) },
+          { role: "user", content: probe },
         ],
         max_tokens: MAX_TOKENS,
       }),

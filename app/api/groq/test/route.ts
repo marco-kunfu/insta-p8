@@ -6,16 +6,16 @@ import { diagnoseAIReply } from "@/lib/ai-reply"
 // outcome. The send path in the webhook swallows failures, which makes a
 // misconfigured key look identical to the feature being switched off.
 export async function POST(request: NextRequest) {
-  const { userId } = await request.json().catch(() => ({ userId: null }))
+  const { userId, probe } = await request.json().catch(() => ({ userId: null, probe: undefined }))
   if (!userId) return NextResponse.json({ error: "userId required" }, { status: 400 })
 
   const supabase = await getSupabaseServerClient()
   const { data } = await supabase
     .from("users")
-    .select("groq_api_key, ai_base_url, ai_model")
+    .select("groq_api_key, ai_base_url, ai_model, ai_context")
     .eq("id", userId)
     .single()
 
-  const result = await diagnoseAIReply(data?.groq_api_key, data?.ai_base_url, data?.ai_model)
+  const result = await diagnoseAIReply(data?.groq_api_key, data?.ai_base_url, data?.ai_model, data?.ai_context, probe)
   return NextResponse.json(result, { status: result.ok ? 200 : 502 })
 }
