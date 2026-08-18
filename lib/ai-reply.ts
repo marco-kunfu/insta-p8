@@ -79,7 +79,11 @@ export async function generateAIReply(
           { role: "system", content: systemPrompt },
           { role: "user", content: userMessage },
         ],
-        max_tokens: 150,
+        // 150 was sized for a model that answers directly. Reasoning models
+        // spend most of it thinking — a one-line reply measured 77 tokens, so a
+        // longer question would exhaust the budget and come back empty. The
+        // prompt is what keeps replies short, not this ceiling.
+        max_tokens: 400,
         temperature: 0.7,
       }),
     })
