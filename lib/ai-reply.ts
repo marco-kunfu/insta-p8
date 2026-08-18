@@ -93,3 +93,66 @@ export async function generateAIReply(
     return null
   }
 }
+
+export interface AIDiagnostics {
+  ok: boolean
+  provider: Provider
+  endpoint: string
+  model: string
+  keySource: "user" | "GROQ_API_KEY" | "OPENAI_API_KEY" | "none"
+  status?: number
+  reply?: string
+  error?: string
+}
+
+/**
+ * Run one real completion and report what happened. Exists because the send
+ * path swallows failures — a key pointed at the wrong provider is
+ * indistinguishable from "the AI is off" from the outside, which cost a long
+ * debugging loop. Never returns the key itself, only where it came from.
+ */
+export async function diagnoseAIReply(
+  userApiKey?: string | null,
+  userBaseUrl?: string | null,
+  userModel?: string | null,
+): Promise<AIDiagnostics> {
+  const apiKey = userApiKey || process.env.GROQ_API_KEY || process.env.OPENAI_API_KEY
+  const keySource: AIDiagnostics["keySource"] = userApiKey
+    ? "user"
+    : process.env.GROQ_API_KEY
+      ? "GROQ_API_KEY"
+      : process.env.OPENAI_API_KEY
+        ? "OPENAI_API_KEY"
+        : "none"
+
+  if (!apiKey) {
+    return { ok: false, provider: "groq", endpoint: "", model: "", keySource, error: "No API key configured" }
+  }
+
+  const provider = providerFor(apiKey)
+  const endpoint = resolveEndpoint(userBaseUrl, provider)
+  const model = userModel || process.env.AI_MODEL || DEFAULT_MODELS[provider]
+
+  try {
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify({
+        model,
+        messages: [
+          { role: "system", content: "Reply with exactly: ok" },
+          { role: "user", content: "ping" },
+        ],
+        max_tokens: 10,
+      }),
+    })
+    if (!res.ok) {
+      const body = await res.text()
+      return { ok: false, provider, endpoint, model, keySource, status: res.status, error: body.slice(0, 300) }
+    }
+    const data = await res.json()
+    return { ok: true, provider, endpoint, model, keySource, status: res.status, reply: data.choices?.[0]?.message?.content?.trim() }
+  } catch (e) {
+    return { ok: false, provider, endpoint, model, keySource, error: e instanceof Error ? e.message : "network error" }
+  }
+}
