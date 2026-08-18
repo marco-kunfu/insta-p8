@@ -36,20 +36,21 @@ function resolveTheme(theme: Theme): "light" | "dark" {
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = React.useState<Theme>("dark")
-  const [resolvedTheme, setResolvedTheme] = React.useState<"light" | "dark">("dark")
+  const [theme, setThemeState] = React.useState<Theme>("light")
+  const [resolvedTheme, setResolvedTheme] = React.useState<"light" | "dark">("light")
   const [mounted, setMounted] = React.useState(false)
 
   // Read stored theme on first mount and apply it before paint
   React.useLayoutEffect(() => {
-    let initial: Theme = "dark"
+    let initial: Theme = "light"
     try {
       const stored = window.localStorage.getItem(STORAGE_KEY) as Theme | null
       if (stored === "light" || stored === "dark" || stored === "system") {
         initial = stored
       }
     } catch {
-      // localStorage unavailable (e.g. SSR or sandboxed) — fall back to dark
+      // localStorage unavailable (e.g. SSR or sandboxed) — fall back to light,
+      // matching the Kunfupay dashboard and the bootstrap in app/layout.tsx
     }
     const resolved = resolveTheme(initial)
     applyTheme(resolved)

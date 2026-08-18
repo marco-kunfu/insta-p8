@@ -37,9 +37,6 @@ export function LandingPage() {
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-[#ededed] selection:bg-[#ffe14d] selection:text-black overflow-x-hidden antialiased">
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;700&display=swap');
-        .font-serif-display { font-family: 'Instrument Serif', Georgia, serif; }
-        .font-mono-ui { font-family: 'JetBrains Mono', ui-monospace, monospace; }
         @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
         .marquee-track { animation: marquee 30s linear infinite; }
         @keyframes fade-up { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }

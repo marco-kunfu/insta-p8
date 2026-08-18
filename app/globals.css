@@ -1,132 +1,173 @@
-@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;700&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
 
 /* ============================================================
-   Light theme (default). WCAG AA targets ≥4.5:1 for body text.
-   Palette: warm cream surface + obsidian ink + crimson accent + yellow.
+   Morfeo — Kunfupay's design system.
+
+   Values come from docs/MORFEO.md in the kunfupay-app-template repo,
+   extracted from the live dashboard at business.kunfupay.com with
+   getComputedStyle. Light is the canonical theme: the real dashboard runs
+   white with violet-tinted atmosphere, not a flat grey.
+
+   Things that look like mistakes but are not:
+     · primary-hover is LIGHTER than primary (#9c87fe over #734bfc).
+     · text-subtle is DARKER than text-muted.
+     · borders are desaturated lilac (#ece9fb), never neutral grey.
+     · red is #f04438 and green #16a34a (Untitled-UI), not Tailwind's.
    ============================================================ */
 :root {
-  --background: oklch(0.985 0.005 90);          /* #faf8f5 warm cream */
-  --foreground: oklch(0.18 0.01 280);           /* #1a1a24 obsidian ink */
+  /* Primary ramp */
+  --primary-50: #f4f3ff;
+  --primary-100: #eae8ff;
+  --primary-200: #d9d4ff;
+  --primary-300: #bcb2ff;
+  --primary-400: #9c87fe;
+  --primary-500: #734bfc;
+  --primary-600: #6b33f4;
+  --primary-700: #5c21e0;
+  --primary-800: #4d1bbc;
+  --primary-900: #41189a;
+  --primary-950: #260d68;
 
-  --card: oklch(1 0 0);                          /* pure white cards */
-  --card-foreground: oklch(0.18 0.01 280);
+  --background: #ffffff;
+  --foreground: #18181b;
 
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.18 0.01 280);
+  --card: #ffffff;
+  --card-foreground: #18181b;
 
-  --primary: oklch(0.18 0.01 280);                /* obsidian buttons */
-  --primary-foreground: oklch(0.985 0.005 90);
+  --popover: #ffffff;
+  --popover-foreground: #18181b;
 
-  --secondary: oklch(0.94 0.01 90);               /* soft cream chips */
-  --secondary-foreground: oklch(0.25 0.01 280);
+  --primary: #734bfc;
+  --primary-foreground: #ffffff;
+  --primary-hover: #9c87fe;
+  --primary-active: #5c21e0;
+  --primary-soft: rgba(115, 75, 252, 0.08);
+  --primary-softer: rgba(115, 75, 252, 0.04);
 
-  --muted: oklch(0.95 0.008 90);
-  --muted-foreground: oklch(0.45 0.01 280);      /* 5.2:1 on background */
+  /* Morfeo's "soft" secondary button: lilac fill, lilac border */
+  --secondary: #eae8ff;
+  --secondary-foreground: #4d1bbc;
 
-  --accent: oklch(0.93 0.01 90);
-  --accent-foreground: oklch(0.18 0.01 280);
+  --muted: #fafafa;
+  --muted-foreground: #71717a;
+  --text-subtle: #52525b;
 
-  --destructive: oklch(0.52 0.22 27);             /* crimson — 4.6:1 on bg */
-  --destructive-foreground: oklch(0.985 0.005 90);
+  /* Sunken blocks are violet-tinted, never grey — Morfeo signature #9 */
+  --accent: rgba(115, 75, 252, 0.08);
+  --accent-foreground: #18181b;
 
-  --success: oklch(0.55 0.16 145);                /* green for active toggles */
-  --success-foreground: oklch(0.985 0.005 90);
+  --destructive: #f04438;
+  --destructive-foreground: #ffffff;
+  --success: #16a34a;
+  --success-foreground: #ffffff;
+  --warning: #f59e0b;
+  --warning-foreground: #18181b;
+  --info: #3b82f6;
+  --info-foreground: #ffffff;
 
-  --warning: oklch(0.78 0.16 88);                 /* amber */
-  --warning-foreground: oklch(0.18 0.01 280);
+  /* Desaturated lilac, not grey — Morfeo signature #2 */
+  --border: #ece9fb;
+  --border-card: rgba(217, 212, 255, 0.65);
+  --input: #ece9fb;
+  --ring: rgba(115, 75, 252, 0.36);
 
-  --border: oklch(0.88 0.01 90);                  /* visible hairline */
-  --input: oklch(0.88 0.01 90);
-  --ring: oklch(0.55 0.18 88);                    /* yellow focus ring */
+  /* 10px base; cards get 20px and pills 999px on their own */
+  --radius: 0.625rem;
 
-  /* Brand accents — tuned for legibility, not just punch.
-     accent-yellow drops chroma from 0.18 to 0.12 (less neon) and
-     lightness from 0.82 to 0.72 so it's a warm amber that doesn't
-     burn the eye on small text / badges in light mode. Dark mode
-     keeps the punchier values since the eye expects more saturation
-     against a dark surface. */
-    --accent-yellow: oklch(0.72 0.12 88);           /* soft amber — readable on cream */
-    --accent-yellow-foreground: oklch(0.18 0.01 280);
-    --accent-yellow-soft: oklch(0.94 0.06 88);       /* for tinted backgrounds */
-    --accent-blue: oklch(0.55 0.18 255);            /* 4.6:1 on bg */
-    --accent-blue-foreground: oklch(0.985 0.005 90);
-    --accent-pink: oklch(0.55 0.22 0);              /* 4.6:1 on bg */
-    --accent-pink-foreground: oklch(0.985 0.005 90);
+  --sidebar: #fafafa;
+  --sidebar-foreground: #18181b;
+  --sidebar-primary: #734bfc;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: rgba(115, 75, 252, 0.08);
+  --sidebar-accent-foreground: #18181b;
+  --sidebar-border: #ece9fb;
+  --sidebar-ring: rgba(115, 75, 252, 0.36);
 
-  --radius: 0.5rem;
-
-  --sidebar: oklch(0.97 0.006 90);
-  --sidebar-foreground: oklch(0.25 0.01 280);
-  --sidebar-primary: oklch(0.18 0.01 280);
-  --sidebar-primary-foreground: oklch(0.985 0.005 90);
-  --sidebar-accent: oklch(0.93 0.01 90);
-  --sidebar-accent-foreground: oklch(0.18 0.01 280);
-  --sidebar-border: oklch(0.88 0.01 90);
-  --sidebar-ring: oklch(0.55 0.18 88);
+  /* Legacy aliases. The codebase has ~100 accent-yellow call sites from the
+     upstream theme; pointing them at the violet primary converts them without
+     touching every file. They get renamed in a follow-up pass. */
+  --accent-yellow: #734bfc;
+  /* Read as "the accent's text colour", which is how the call sites use it:
+     mostly on a 8-10% violet tint or on plain white, not on solid violet.
+     The handful of solid-accent surfaces ask for text-white explicitly. */
+  --accent-yellow-foreground: #4d1bbc;
+  --accent-yellow-soft: #eae8ff;
+  --accent-blue: #3b82f6;
+  --accent-blue-foreground: #ffffff;
+  --accent-pink: #f04438;
+  --accent-pink-foreground: #ffffff;
 }
 
 /* ============================================================
-   Dark theme. Same tokens, inverted lightness, contrast preserved.
+   Dark theme. Surfaces and the primary ramp are Morfeo's measured dark
+   values; the border alphas are derived, since the live dashboard runs
+   light and no dark border was ever measured.
    ============================================================ */
 .dark {
-  --background: oklch(0.13 0.005 280);            /* near-black, slight cool */
-  --foreground: oklch(0.97 0.005 90);            /* warm white */
+  --background: #111114;
+  --foreground: #fafafa;
 
-  --card: oklch(0.17 0.006 280);
-  --card-foreground: oklch(0.97 0.005 90);
+  --card: #1a1a1e;
+  --card-foreground: #fafafa;
 
-  --popover: oklch(0.17 0.006 280);
-  --popover-foreground: oklch(0.97 0.005 90);
+  --popover: #1a1a1e;
+  --popover-foreground: #fafafa;
 
-  --primary: oklch(0.97 0.005 90);
-  --primary-foreground: oklch(0.13 0.005 280);
+  --primary: #734bfc;
+  --primary-foreground: #ffffff;
+  --primary-soft: rgba(115, 75, 252, 0.16);
+  --primary-softer: rgba(115, 75, 252, 0.08);
 
-  --secondary: oklch(0.24 0.006 280);
-  --secondary-foreground: oklch(0.97 0.005 90);
+  --secondary: #27272a;
+  --secondary-foreground: #eae8ff;
 
-  --muted: oklch(0.21 0.006 280);
-  --muted-foreground: oklch(0.72 0.01 280);       /* ≥4.5:1 on background */
+  --muted: #1a1a1e;
+  --muted-foreground: #a1a1aa;
+  --text-subtle: #d4d4d8;
 
-  --accent: oklch(0.24 0.006 280);
-  --accent-foreground: oklch(0.97 0.005 90);
+  --accent: rgba(115, 75, 252, 0.16);
+  --accent-foreground: #fafafa;
 
-  --destructive: oklch(0.62 0.22 27);             /* brighter on dark */
-  --destructive-foreground: oklch(0.97 0.005 90);
+  --destructive: #f04438;
+  --destructive-foreground: #ffffff;
+  --success: #16a34a;
+  --success-foreground: #ffffff;
+  --warning: #f59e0b;
+  --warning-foreground: #18181b;
+  --info: #3b82f6;
+  --info-foreground: #ffffff;
 
-  --success: oklch(0.7 0.16 145);
-  --success-foreground: oklch(0.13 0.005 280);
+  --border: rgba(188, 178, 255, 0.14);
+  --border-card: rgba(188, 178, 255, 0.12);
+  --input: rgba(188, 178, 255, 0.14);
+  --ring: rgba(115, 75, 252, 0.36);
 
-  --warning: oklch(0.82 0.16 88);
-  --warning-foreground: oklch(0.13 0.005 280);
+  --sidebar: #09090b;
+  --sidebar-foreground: #fafafa;
+  --sidebar-primary: #734bfc;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: rgba(115, 75, 252, 0.16);
+  --sidebar-accent-foreground: #fafafa;
+  --sidebar-border: rgba(188, 178, 255, 0.10);
+  --sidebar-ring: rgba(115, 75, 252, 0.36);
 
-  --border: oklch(0.28 0.006 280);
-  --input: oklch(0.28 0.006 280);
-  --ring: oklch(0.82 0.18 95);
-
-  --accent-yellow: oklch(0.85 0.18 95);              /* punchy yellow for dark — eye expects saturation here */
-    --accent-yellow-foreground: oklch(0.13 0.005 280);
-    --accent-blue: oklch(0.7 0.17 255);              /* ≥4.5:1 on dark bg */
-    --accent-blue-foreground: oklch(0.13 0.005 280);
-    --accent-pink: oklch(0.72 0.2 0);
-    --accent-pink-foreground: oklch(0.13 0.005 280);
-
-  --sidebar: oklch(0.13 0.005 280);
-  --sidebar-foreground: oklch(0.85 0.005 90);
-  --sidebar-primary: oklch(0.97 0.005 90);
-  --sidebar-primary-foreground: oklch(0.13 0.005 280);
-  --sidebar-accent: oklch(0.21 0.006 280);
-  --sidebar-accent-foreground: oklch(0.97 0.005 90);
-  --sidebar-border: oklch(0.24 0.006 280);
-  --sidebar-ring: oklch(0.85 0.18 95);
+  --accent-yellow: #9c87fe;
+  --accent-yellow-foreground: #d9d4ff;
+  --accent-yellow-soft: rgba(115, 75, 252, 0.16);
+  --accent-blue: #3b82f6;
+  --accent-blue-foreground: #ffffff;
+  --accent-pink: #f04438;
+  --accent-pink-foreground: #ffffff;
 }
 
 @theme inline {
-  --font-sans: "Geist", "Geist Fallback";
-  --font-serif: "Crimson Pro", serif;
+  --font-sans: var(--font-plus-jakarta), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: var(--font-roboto-mono), ui-monospace, "SF Mono", Menlo, monospace;
+  --font-serif: var(--font-plus-jakarta), -apple-system, sans-serif;
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -135,10 +176,15 @@
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-active: var(--primary-active);
+  --color-primary-soft: var(--primary-soft);
+  --color-primary-softer: var(--primary-softer);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
+  --color-text-subtle: var(--text-subtle);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
@@ -147,13 +193,34 @@
   --color-success-foreground: var(--success-foreground);
   --color-warning: var(--warning);
   --color-warning-foreground: var(--warning-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
   --color-border: var(--border);
+  --color-border-card: var(--border-card);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+
+  /* Morfeo's radius scale */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+  --radius-2xl: 24px;
+  --radius-pill: 999px;
+
+  /* Violet-tinted double-layer shadows — Morfeo signature #1 */
+  --shadow-xs: 0 1px 2px rgba(13, 16, 24, 0.04);
+  --shadow-sm: 0 2px 6px -2px rgba(13, 16, 24, 0.08);
+  --shadow-md: 0 6px 16px -6px rgba(115, 75, 252, 0.18), 0 2px 6px -2px rgba(13, 16, 24, 0.06);
+  --shadow-lg: 0 12px 28px -10px rgba(115, 75, 252, 0.22), 0 4px 10px -4px rgba(13, 16, 24, 0.08);
+  --shadow-xl: 0 24px 48px -16px rgba(115, 75, 252, 0.28), 0 8px 16px -6px rgba(13, 16, 24, 0.10);
+  --shadow-2xl: 0 40px 80px -24px rgba(115, 75, 252, 0.32), 0 12px 24px -8px rgba(13, 16, 24, 0.12);
+
+  /* Nothing in Morfeo uses plain `ease` — signature #10 */
+  --ease-out-expo: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -163,15 +230,14 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
-  /* Brand accents — exposed as Tailwind colors so we can use bg-accent-yellow etc. */
-    --color-accent-yellow: var(--accent-yellow);
-    --color-accent-yellow-foreground: var(--accent-yellow-foreground);
-    --color-accent-yellow-soft: var(--accent-yellow-soft);
-    --color-accent-blue: var(--accent-blue);
-    --color-accent-blue-foreground: var(--accent-blue-foreground);
-    --color-accent-pink: var(--accent-pink);
-    --color-accent-pink-foreground: var(--accent-pink-foreground);
-  }
+  --color-accent-yellow: var(--accent-yellow);
+  --color-accent-yellow-foreground: var(--accent-yellow-foreground);
+  --color-accent-yellow-soft: var(--accent-yellow-soft);
+  --color-accent-blue: var(--accent-blue);
+  --color-accent-blue-foreground: var(--accent-blue-foreground);
+  --color-accent-pink: var(--accent-pink);
+  --color-accent-pink-foreground: var(--accent-pink-foreground);
+}
 
 @layer base {
   * {
@@ -180,28 +246,71 @@
   body {
     @apply bg-background text-foreground antialiased;
   }
+  /* Everything large and bold carries tight tracking — signature #7 */
+  h1, h2, h3 {
+    letter-spacing: -0.025em;
+  }
 }
 
-/* Subtle surface utilities — theme-aware */
+/* ============================================================
+   Morfeo surface signatures
+   ============================================================ */
+
+/* Violet atmosphere in the upper corners, not a flat background — #8 */
+.morfeo-atmosphere {
+  background-image:
+    radial-gradient(circle at 20% 20%, rgba(115, 75, 252, 0.15), transparent 60%),
+    radial-gradient(circle at 80% 15%, rgba(156, 135, 254, 0.11), transparent 60%);
+}
+
+/* 1px light edge along a section's top border — #8 */
+.morfeo-edge-light::before {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(188, 178, 255, 0.55), transparent);
+}
+
+/* The primary is never flat — #4 */
+.morfeo-cta {
+  background-image: linear-gradient(to right bottom, #734bfc, #5c21e0);
+  color: #fff;
+  transition: transform 140ms var(--ease-out-expo), box-shadow 140ms var(--ease-out-expo);
+}
+.morfeo-cta:hover {
+  background-image: linear-gradient(to right bottom, #9c87fe, #6b33f4);
+}
+
+.morfeo-avatar-gradient {
+  background-image: linear-gradient(160deg, #734bfc 0%, #5c21e0 100%);
+}
+
+/* Sub-blocks inside a card are violet-sunken, not grey — #9 */
+.morfeo-sunken {
+  background-color: var(--primary-softer);
+}
+
 .glass-panel {
   @apply bg-card/60 backdrop-blur-md border border-border;
 }
 
 .hover-glow {
-  @apply transition-colors duration-200;
+  transition: background-color 140ms var(--ease-out-expo);
 }
 .hover-glow:hover {
   @apply bg-accent;
 }
 
 .vercel-row-hover {
-  @apply transition-colors cursor-pointer;
+  transition: background-color 140ms var(--ease-out-expo);
+  cursor: pointer;
 }
 .vercel-row-hover:hover {
-  background-color: color-mix(in oklch, var(--accent) 60%, transparent);
+  background-color: var(--primary-soft);
 }
 
-/* Editorial scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
 }
@@ -212,13 +321,17 @@
   @apply bg-border rounded-full;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background-color: color-mix(in oklch, var(--border) 60%, var(--foreground) 40%);
+  background-color: var(--primary-300);
 }
 
-/* Editorial type utilities (shared across app) */
+/* Type utilities kept under their old names so existing call sites convert
+   without edits. The display face is no longer a serif: Morfeo is Plus
+   Jakarta Sans throughout, with tracking doing the work a serif used to. */
 .font-serif-display {
-  font-family: 'Instrument Serif', Georgia, serif;
+  font-family: var(--font-plus-jakarta), -apple-system, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.025em;
 }
 .font-mono-ui {
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-family: var(--font-roboto-mono), ui-monospace, monospace;
 }

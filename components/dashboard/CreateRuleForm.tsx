@@ -314,7 +314,7 @@ export function CreateRuleForm({ userId, triggerSource, onSuccess, editRule }: C
                 >
                   <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-xs font-bold transition-all duration-300 ${
                     isCompleted
-                      ? "bg-accent-yellow text-black shadow-[0_0_15px_rgba(255,225,77,0.3)]"
+                      ? "bg-accent-yellow text-white shadow-[0_0_15px_rgba(115,75,252,0.3)]"
                       : isActive
                         ? "bg-white text-black ring-4 ring-white/10"
                         : "bg-muted text-muted-foreground border border-border"
@@ -388,7 +388,7 @@ export function CreateRuleForm({ userId, triggerSource, onSuccess, editRule }: C
                 <div className="space-y-4">
                   <FieldLabel>Automate which post or reel?</FieldLabel>
                   {loadingReels ? (
-                    <div className="p-8 flex flex-col items-center justify-center gap-3 border border-border rounded-2xl bg-white/[0.01]">
+                    <div className="p-8 flex flex-col items-center justify-center gap-3 border border-border rounded-2xl bg-primary-softer">
                       <Loader2 className="w-6 h-6 animate-spin text-accent-yellow-foreground" />
                       <span className="text-xs text-muted-foreground font-mono-ui">Fetching Instagram feed...</span>
                     </div>
@@ -452,7 +452,7 @@ export function CreateRuleForm({ userId, triggerSource, onSuccess, editRule }: C
                                                       {/* Selected Check overlay */}
                                                       {isSelected && (
                                                         <div className="absolute inset-0 bg-accent-yellow/20 flex items-center justify-center backdrop-blur-[1px]">
-                                                          <div className="w-9 h-9 rounded-full bg-accent-yellow text-accent-yellow-foreground flex items-center justify-center shadow-lg ring-2 ring-accent-yellow-foreground">
+                                                          <div className="w-9 h-9 rounded-full bg-accent-yellow text-white flex items-center justify-center shadow-lg ring-2 ring-accent-yellow-foreground">
                                                             <Check className="w-4 h-4 stroke-[3]" />
                                                           </div>
                                                         </div>
@@ -625,7 +625,7 @@ export function CreateRuleForm({ userId, triggerSource, onSuccess, editRule }: C
                           </div>
                         </div>
                         {showProductPicker && (
-                          <div className="bg-white/[0.02] border border-border rounded-2xl p-3 space-y-2">
+                          <div className="bg-primary-softer border border-border rounded-2xl p-3 space-y-2">
                             <div className="flex items-center justify-between">
                               <FieldLabel>Kunfupay products</FieldLabel>
                               <button type="button" onClick={() => setShowProductPicker(false)}
@@ -651,7 +651,7 @@ export function CreateRuleForm({ userId, triggerSource, onSuccess, editRule }: C
                               <div className="max-h-48 overflow-y-auto space-y-1">
                                 {products.map((p) => (
                                   <button key={p.id} type="button" onClick={() => addProductButton(p)}
-                                    className="w-full flex items-center justify-between gap-3 text-left px-2.5 py-2 rounded-xl hover:bg-white/[0.04] transition-colors">
+                                    className="w-full flex items-center justify-between gap-3 text-left px-2.5 py-2 rounded-xl hover:bg-primary-soft transition-colors">
                                     <span className="text-xs text-foreground truncate">{p.name}</span>
                                     <span className="font-mono-ui text-[10px] text-muted-foreground shrink-0">
                                       {p.free ? "Free" : `${p.price} ${p.currency}`}
@@ -663,7 +663,7 @@ export function CreateRuleForm({ userId, triggerSource, onSuccess, editRule }: C
                           </div>
                         )}
                         {buttons.map((btn) => (
-                          <div key={btn.id} className="flex gap-2 items-center bg-white/[0.02] p-3 rounded-2xl border border-border">
+                          <div key={btn.id} className="flex gap-2 items-center bg-primary-softer p-3 rounded-2xl border border-border">
                             <input
                               value={btn.title}
                               onChange={(e) => updateButton(btn.id, "title", e.target.value)}
@@ -674,7 +674,7 @@ export function CreateRuleForm({ userId, triggerSource, onSuccess, editRule }: C
                             <select
                               value={btn.type}
                               onChange={(e) => updateButton(btn.id, "type", e.target.value)}
-                              className="h-8 text-[11px] bg-black border border-border rounded-lg px-2 text-foreground focus:outline-none"
+                              className="h-8 text-[11px] bg-card border border-border rounded-lg px-2 text-foreground focus:outline-none"
                             >
                               <option value="web_url">Open Link</option>
                               <option value="postback">Trigger Flow</option>
@@ -771,7 +771,7 @@ export function CreateRuleForm({ userId, triggerSource, onSuccess, editRule }: C
                 <ToggleRow icon={<Lock className="w-5 h-5" />} title="Follow gate required" sub="Only followers get the payload. Non-followers get follow prompt first." on={checkFollow} onToggle={() => setCheckFollow(!checkFollow)} />
                 <ToggleRow icon={<Eye className="w-5 h-5" />} title="Mimic active typing status" sub="Displays typing bubble indicators to look completely organic." on={typingIndicator} onToggle={() => setTypingIndicator(!typingIndicator)} />
                 
-                <div className="flex items-center justify-between p-4 rounded-2xl border border-border bg-white/[0.01]">
+                <div className="flex items-center justify-between p-4 rounded-2xl border border-border bg-primary-softer">
                   <div className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-xl bg-muted flex items-center justify-center border border-border">
                       <Timer className="w-4.5 h-4.5 text-muted-foreground" />
@@ -784,7 +784,7 @@ export function CreateRuleForm({ userId, triggerSource, onSuccess, editRule }: C
                   <select
                     value={delaySeconds}
                     onChange={(e) => setDelaySeconds(Number(e.target.value))}
-                    className="bg-black border border-border rounded-xl px-3 py-2 text-xs text-foreground focus:outline-none hover:border-border transition-all cursor-pointer"
+                    className="bg-card border border-border rounded-xl px-3 py-2 text-xs text-foreground focus:outline-none hover:border-border transition-all cursor-pointer"
                   >
                     <option value={0}>Send Immediately</option>
                     <option value={3}>3s delay</option>
@@ -826,7 +826,7 @@ export function CreateRuleForm({ userId, triggerSource, onSuccess, editRule }: C
                 type="button"
                 onClick={() => { if (stepValid[step]) setStep(step + 1) }}
                 disabled={!stepValid[step]}
-                className="flex items-center gap-2 h-11 px-6 rounded-full bg-white text-black font-mono-ui text-xs font-bold hover:bg-accent-yellow hover:shadow-[0_0_20px_rgba(255,225,77,0.25)] active:scale-[0.98] transition-all disabled:opacity-30 disabled:cursor-not-allowed ml-auto"
+                className="flex items-center gap-2 h-11 px-6 rounded-full bg-white text-white font-mono-ui text-xs font-bold hover:bg-accent-yellow hover:shadow-[0_0_20px_rgba(115,75,252,0.25)] active:scale-[0.98] transition-all disabled:opacity-30 disabled:cursor-not-allowed ml-auto"
               >
                 Continue
                 <ChevronRight className="w-4 h-4" />
@@ -836,7 +836,7 @@ export function CreateRuleForm({ userId, triggerSource, onSuccess, editRule }: C
                 type="button"
                 onClick={handleSubmit}
                 disabled={!canSave || saving}
-                className="flex items-center justify-center gap-2 h-11 px-8 rounded-full bg-accent-yellow text-black font-mono-ui text-sm font-bold hover:brightness-95 hover:shadow-[0_0_25px_rgba(255,225,77,0.35)] active:scale-[0.98] transition-all disabled:opacity-30 disabled:cursor-not-allowed ml-auto"
+                className="flex items-center justify-center gap-2 h-11 px-8 rounded-full bg-accent-yellow text-white font-mono-ui text-sm font-bold hover:brightness-95 hover:shadow-[0_0_25px_rgba(115,75,252,0.35)] active:scale-[0.98] transition-all disabled:opacity-30 disabled:cursor-not-allowed ml-auto"
               >
                 {saving ? <Loader2 className="w-4.5 h-4.5 animate-spin" /> : <Zap className="w-4 h-4 stroke-[2.5]" />}
                 {saving ? "Saving Changes..." : isEditing ? "Save Automation" : "Go Live"}
@@ -929,7 +929,7 @@ export function CreateRuleForm({ userId, triggerSource, onSuccess, editRule }: C
                             {cardSubtitle && <p className="text-[10px] text-muted-foreground mt-1 line-clamp-2 leading-tight">{cardSubtitle}</p>}
                           </div>
                           {buttons.filter((b) => b.title).map((b) => (
-                            <div key={b.id} className="border-t border-border py-2 text-center text-[10px] font-bold text-[#3797f0] bg-white/[0.01] cursor-pointer hover:bg-white/[0.03] transition-colors">
+                            <div key={b.id} className="border-t border-border py-2 text-center text-[10px] font-bold text-[#3797f0] bg-primary-softer cursor-pointer hover:bg-primary-soft transition-colors">
                               {b.title}
                             </div>
                           ))}
@@ -954,7 +954,7 @@ export function CreateRuleForm({ userId, triggerSource, onSuccess, editRule }: C
                   </div>
                 ) : (
                   <div className="flex justify-end animate-pulse">
-                    <div className="border border-dashed border-border bg-white/[0.01] rounded-2xl px-4 py-3 text-[10px] text-muted-foreground font-mono-ui italic text-center w-full">
+                    <div className="border border-dashed border-border bg-primary-softer rounded-2xl px-4 py-3 text-[10px] text-muted-foreground font-mono-ui italic text-center w-full">
                       Configure step 2 to build payload
                     </div>
                   </div>
@@ -1060,7 +1060,7 @@ function ToggleRow({
     <button
       type="button"
       onClick={onToggle}
-      className={`w-full p-4 rounded-2xl border text-left flex items-center gap-3.5 transition-all duration-200 bg-white/[0.01] ${
+      className={`w-full p-4 rounded-2xl border text-left flex items-center gap-3.5 transition-all duration-200 bg-primary-softer ${
         on ? "border-accent-yellow/40 bg-accent-yellow/[0.03]" : "border-border hover:border-border"
       }`}
     >
@@ -1070,7 +1070,7 @@ function ToggleRow({
         <span className="block text-xs text-muted-foreground mt-0.5 leading-relaxed">{sub}</span>
       </span>
       <span className={`w-10 h-5.5 rounded-full relative transition-colors shrink-0 ${on ? "bg-accent-yellow" : "bg-muted"}`}>
-        <span className={`absolute top-0.5 w-4.5 h-4.5 rounded-full bg-black shadow-md transition-all ${on ? "left-[20px]" : "left-0.5"}`} />
+        <span className={`absolute top-0.5 w-4.5 h-4.5 rounded-full bg-white shadow-md transition-all ${on ? "left-[20px]" : "left-0.5"}`} />
       </span>
     </button>
   )

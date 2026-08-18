@@ -1,13 +1,23 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Geist, Geist_Mono } from "next/font/google"
+import { Plus_Jakarta_Sans, Roboto_Mono } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
 import { Toaster } from "@/components/ui/sonner"
 import { ThemeProvider } from "@/components/theme-provider"
 
-const _geist = Geist({ subsets: ["latin"] })
-const _geistMono = Geist_Mono({ subsets: ["latin"] })
+// Morfeo's faces. The previous Geist instances were assigned to unused
+// variables and never reached the document, so sans fell back to the system.
+const plusJakarta = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  variable: "--font-plus-jakarta",
+  display: "swap",
+})
+const robotoMono = Roboto_Mono({
+  subsets: ["latin"],
+  variable: "--font-roboto-mono",
+  display: "swap",
+})
 
 export const metadata: Metadata = {
   title: "InstaAuto — Instagram Automation",
@@ -35,7 +45,7 @@ const themeBootstrap = `
 (function() {
   try {
     var stored = window.localStorage.getItem('insta-p8-theme');
-    var theme = (stored === 'light' || stored === 'dark' || stored === 'system') ? stored : 'dark';
+    var theme = (stored === 'light' || stored === 'dark' || stored === 'system') ? stored : 'light';
     var resolved = theme === 'system'
       ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
       : theme;
@@ -53,7 +63,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className={`${plusJakarta.variable} ${robotoMono.variable}`} suppressHydrationWarning>
       <head>
         {/* Pre-hydration theme bootstrap — prevents flash of wrong theme */}
         <script dangerouslySetInnerHTML={{ __html: themeBootstrap }} />
