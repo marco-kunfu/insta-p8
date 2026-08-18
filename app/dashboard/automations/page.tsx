@@ -141,7 +141,7 @@ export default function AutomationsPage() {
                 {/* Header */}
                 <div className="flex items-end justify-between gap-4 flex-wrap">
                     <div>
-                        <p className="font-mono-ui text-[10px] uppercase tracking-[0.3em] text-muted-foreground mb-2">Rules engine</p>
+                        <p className="morfeo-eyebrow text-muted-foreground mb-2">Rules engine</p>
                         <h1 className="font-serif-display text-4xl md:text-5xl text-foreground leading-none">Automations</h1>
                     </div>
                     {/* Theme toggle lives in the sidebar — keep this header clean */}
@@ -164,7 +164,7 @@ export default function AutomationsPage() {
                                     onClick={handleToggleAI}
                                     disabled={aiToggling}
                                     aria-pressed={aiEnabled}
-                                    className={`flex items-center gap-2 h-9 px-4 rounded-full font-mono-ui text-[11px] font-bold uppercase tracking-widest transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                                    className={`flex items-center gap-2 h-9 px-4 rounded-full font-mono-ui text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                                         aiEnabled
                                             ? 'bg-accent-yellow text-foreground border border-accent-yellow'
                                             : 'bg-card text-muted-foreground border border-border hover:text-foreground hover:bg-accent'
@@ -181,7 +181,7 @@ export default function AutomationsPage() {
                                 setShowCreateForm(!showCreateForm)
                             }}
                             aria-expanded={showCreateForm}
-                            className={`flex items-center gap-2 h-9 px-5 rounded-full font-mono-ui text-[11px] font-bold uppercase tracking-widest transition-all active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                            className={`flex items-center gap-2 h-9 px-5 rounded-full font-mono-ui text-sm font-semibold transition-all active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                                 showCreateForm
                                     ? 'bg-card text-foreground border border-border hover:bg-accent'
                                     : 'bg-primary text-primary-foreground hover:opacity-90'
@@ -294,7 +294,7 @@ export default function AutomationsPage() {
                                     key={tab.key}
                                     onClick={() => setActiveTab(tab.key)}
                                     aria-pressed={isActive}
-                                    className={`flex shrink-0 items-center gap-2 rounded-full px-4 py-2 font-mono-ui text-xs uppercase tracking-widest transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                                    className={`flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                                         isActive
                                             ? 'bg-gradient-to-br from-primary to-primary-active text-white shadow-sm'
                                             : 'text-muted-foreground hover:text-foreground'

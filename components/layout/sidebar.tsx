@@ -96,7 +96,7 @@ export function Sidebar({ className, username = "creator", profilePic, onLogout,
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-xs text-sidebar-foreground truncate">@{username}</p>
-            <p className="font-mono-ui text-[9px] uppercase tracking-wider text-sidebar-foreground/60">connected</p>
+            <p className="morfeo-eyebrow text-sidebar-foreground/60">connected</p>
           </div>
           <button
             onClick={onLogout}

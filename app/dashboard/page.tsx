@@ -60,7 +60,7 @@ export default function DashboardPage() {
             {/* Welcome Section */}
             <div className="flex items-center justify-between">
                 <div>
-                    <p className="font-mono-ui text-[10px] uppercase tracking-[0.3em] text-muted-foreground mb-2">Overview</p>
+                    <p className="morfeo-eyebrow text-muted-foreground mb-2">Overview</p>
                     <h1 className="font-serif-display text-4xl md:text-5xl text-foreground leading-none">Hey, {username}.</h1>
                     <p className="text-muted-foreground text-sm mt-3">Here's what your automations did while you were away.</p>
                 </div>
@@ -147,11 +147,11 @@ function StatCard({ title, value, trend, icon }: { title: string, value: string,
         <div className="p-6 rounded-2xl border border-border bg-card hover:border-foreground/20 transition-colors group">
             <div className="flex items-start justify-between">
                 {icon}
-                <span className="font-mono-ui text-[10px] uppercase tracking-widest text-muted-foreground">{trend}</span>
+                <span className="morfeo-eyebrow text-muted-foreground">{trend}</span>
             </div>
             <div className="mt-6">
                 <p className="font-serif-display text-5xl text-foreground leading-none">{value}</p>
-                <p className="font-mono-ui text-[10px] text-muted-foreground uppercase tracking-[0.2em] mt-3">{title}</p>
+                <p className="morfeo-eyebrow text-muted-foreground mt-3">{title}</p>
             </div>
         </div>
     )

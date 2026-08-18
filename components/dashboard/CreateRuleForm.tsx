@@ -543,7 +543,7 @@ export function CreateRuleForm({ userId, triggerSource, onSuccess, editRule }: C
                         key={key}
                         type="button"
                         onClick={() => setReplyMode(key)}
-                        className={`h-11 rounded-xl border text-xs font-bold uppercase tracking-wider transition-all ${
+                        className={`h-11 rounded-xl border text-sm font-semibold transition-all ${
                           replyMode === key ? "border-accent-yellow bg-accent-yellow/10 text-accent-yellow-foreground" : "border-border text-muted-foreground hover:text-foreground"
                         }`}
                       >
@@ -576,7 +576,7 @@ export function CreateRuleForm({ userId, triggerSource, onSuccess, editRule }: C
                           key={key}
                           type="button"
                           onClick={() => setType(key)}
-                          className={`p-3 rounded-xl border text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all ${
+                          className={`p-3 rounded-xl border text-sm font-semibold flex items-center justify-center gap-2 transition-all ${
                             type === key ? "border-accent-yellow bg-accent-yellow/10 text-accent-yellow-foreground" : "border-border text-muted-foreground hover:text-foreground"
                           }`}
                         >
@@ -704,7 +704,7 @@ export function CreateRuleForm({ userId, triggerSource, onSuccess, editRule }: C
                               key={m}
                               type="button"
                               onClick={() => setMediaType(m)}
-                              className={`h-10 rounded-xl border text-xs font-bold uppercase transition-all ${
+                              className={`h-10 rounded-xl border text-sm font-semibold transition-all ${
                                 mediaType === m ? "border-accent-yellow bg-accent-yellow/10 text-accent-yellow-foreground" : "border-border text-muted-foreground hover:text-foreground"
                               }`}
                             >
@@ -849,7 +849,7 @@ export function CreateRuleForm({ userId, triggerSource, onSuccess, editRule }: C
         {replyMode !== "public_only" && (
           <div className="hidden lg:block sticky top-6 dark">
             <div className="text-center mb-3">
-              <span className="font-mono-ui text-[10px] uppercase tracking-[0.25em] text-neutral-400 font-bold">Interactive Preview</span>
+              <span className="morfeo-eyebrow text-muted-foreground">Interactive Preview</span>
             </div>
             
             {/* iPhone Outer Frame — sized to fit the 300px right rail without overflowing */}
@@ -1033,7 +1033,7 @@ function StepHeader({ number, title, description }: { number: number; title: str
 }
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
-  return <p className="font-mono-ui text-[9px] font-bold uppercase tracking-[0.18em] text-muted-foreground mb-2">{children}</p>
+  return <p className="morfeo-eyebrow text-muted-foreground mb-2">{children}</p>
 }
 
 function TextField({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder?: string }) {

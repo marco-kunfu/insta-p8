@@ -347,6 +347,18 @@
 /* Type utilities kept under their old names so existing call sites convert
    without edits. The display face is no longer a serif: Morfeo is Plus
    Jakarta Sans throughout, with tracking doing the work a serif used to. */
+/* Micro-label / eyebrow, measured on business.kunfupay.com: 10.5px, weight
+   700, +0.08em. Their type scale is deliberately fractional — 10.5, 11.5,
+   12.5, 13.5 — so nothing lands on Tailwind's grid, which is part of why
+   their UI reads as theirs. */
+.morfeo-eyebrow {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: 1.4;
+}
+
 /* Headings only, as on kunfupay.com: Plus Jakarta Sans 700 at -0.025em. */
 .font-serif-display {
   font-family: var(--font-plus-jakarta), -apple-system, sans-serif;

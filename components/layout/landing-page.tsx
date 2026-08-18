@@ -65,7 +65,7 @@ export function LandingPage() {
       <main className="relative z-10">
         <section className="px-5 md:px-10 pt-16 md:pt-28 pb-16 max-w-6xl mx-auto">
           <div className="fade-up" style={{ animationDelay: "0ms" }}>
-            <p className="font-mono-ui text-[11px] uppercase tracking-[0.25em] text-muted-foreground mb-6">
+            <p className="morfeo-eyebrow text-muted-foreground mb-6">
               Instagram automation // built for Kunfupay sellers
             </p>
           </div>
@@ -104,7 +104,7 @@ export function LandingPage() {
 
         {/* Marquee — carries Morfeo's 1px light edge on its top border */}
         <div className="morfeo-edge-light relative border-y border-border py-3 overflow-hidden">
-          <div className="marquee-track flex whitespace-nowrap font-mono-ui text-xs uppercase tracking-[0.2em] text-muted-foreground gap-8 w-max">
+          <div className="morfeo-eyebrow marquee-track flex whitespace-nowrap text-muted-foreground gap-8 w-max">
             {Array.from({ length: 2 }).map((_, copy) => (
               <div key={copy} className="flex gap-8">
                 {["comment → DM", "keyword triggers", "story reactions", "AI auto-reply", "live inbox", "ice breakers", "follow gate", "quick replies", "kunfupay checkout", "public + private replies"].map((t) => (
