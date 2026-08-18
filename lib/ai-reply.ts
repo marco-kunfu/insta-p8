@@ -25,11 +25,15 @@ const ENDPOINTS: Record<Provider, string> = {
   xai: XAI_URL,
 }
 
+/**
+ * Providers retire model ids without much notice — the llama-3.1-8b-instant
+ * this fork shipped no longer exists on Groq, which turned a working key into
+ * a silent 404. The Model field overrides these, and when one of them dies the
+ * diagnostic at /api/groq/test returns the provider's current list.
+ */
 const DEFAULT_MODELS: Record<Provider, string> = {
-  groq: "llama-3.1-8b-instant",
+  groq: "openai/gpt-oss-20b",
   openai: "gpt-4o-mini",
-  // xAI renames models fairly often; override it in the Model field if this
-  // one is retired.
   xai: "grok-3",
 }
 
