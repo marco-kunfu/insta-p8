@@ -204,9 +204,22 @@ export function CreateRuleForm({ userId, triggerSource, onSuccess, editRule }: C
     ? hasSelectedReelOption // Comment trigger is valid once they select a specific post or global option
     : !needsKeywords || triggers.length > 0
 
+  /**
+   * Instagram will not render a generic-template element that carries only a
+   * title and buttons: the API accepts it, then the app collapses it to a plain
+   * text bubble and the buttons vanish. A subtitle or a cover image is what
+   * makes it render as a card. Verified against three live rules — the only one
+   * whose buttons disappeared was the one missing both.
+   */
+  const cardNeedsBody = type === "card" && buttons.length > 0 && !cardSubtitle.trim() && !cardImage.trim()
+
   const thenValid =
     replyMode === "public_only" ||
-    (type === "text" ? messageText.trim().length > 0 : type === "card" ? cardTitle.trim().length > 0 : mediaUrl.trim().length > 0)
+    (type === "text"
+      ? messageText.trim().length > 0
+      : type === "card"
+        ? cardTitle.trim().length > 0 && !cardNeedsBody
+        : mediaUrl.trim().length > 0)
   const canSave = whenValid && thenValid && name.trim().length > 0
 
   const stepValid = [
@@ -616,6 +629,15 @@ export function CreateRuleForm({ userId, triggerSource, onSuccess, editRule }: C
                         <TextField value={cardTitle} onChange={setCardTitle} placeholder="Card main title" />
                         <TextField value={cardSubtitle} onChange={setCardSubtitle} placeholder="Subtitle description (optional)" />
                         <TextField value={cardImage} onChange={setCardImage} placeholder="Cover image URL (optional)" />
+                        {cardNeedsBody && (
+                          <p className="flex items-start gap-2 rounded-xl border border-warning/40 bg-warning/10 px-3 py-2 text-[11px] text-foreground">
+                            <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-warning" />
+                            <span>
+                              Add a subtitle or a cover image. Instagram hides the buttons on a card
+                              that has only a title — it arrives as a plain message instead.
+                            </span>
+                          </p>
+                        )}
                       </div>
                       <div className="space-y-2.5">
                         <div className="flex items-center justify-between border-b border-border pb-2">
