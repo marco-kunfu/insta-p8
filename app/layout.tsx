@@ -1,22 +1,24 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Plus_Jakarta_Sans, Roboto_Mono } from "next/font/google"
+import { Inter, Plus_Jakarta_Sans } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
 import { Toaster } from "@/components/ui/sonner"
 import { BRAND, THEME_STORAGE_KEY } from "@/lib/brand"
 import { ThemeProvider } from "@/components/theme-provider"
 
-// Morfeo's faces. The previous Geist instances were assigned to unused
-// variables and never reached the document, so sans fell back to the system.
+// Kunfupay runs two faces, measured on kunfupay.com: Inter for body and UI
+// (895 leaf elements) and Plus Jakarta Sans for headings (252). There is no
+// monospace anywhere on their site — MORFEO.md listing a mono family was
+// misleading, so the fork's mono micro-labels had to go.
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+})
 const plusJakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
   variable: "--font-plus-jakarta",
-  display: "swap",
-})
-const robotoMono = Roboto_Mono({
-  subsets: ["latin"],
-  variable: "--font-roboto-mono",
   display: "swap",
 })
 
@@ -52,7 +54,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={`${plusJakarta.variable} ${robotoMono.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`${inter.variable} ${plusJakarta.variable}`} suppressHydrationWarning>
       <head>
         {/* Pre-hydration theme bootstrap — prevents flash of wrong theme */}
         <script dangerouslySetInnerHTML={{ __html: themeBootstrap }} />

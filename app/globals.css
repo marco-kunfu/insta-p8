@@ -164,8 +164,8 @@
 }
 
 @theme inline {
-  --font-sans: var(--font-plus-jakarta), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --font-mono: var(--font-roboto-mono), ui-monospace, "SF Mono", Menlo, monospace;
+  --font-sans: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-display: var(--font-plus-jakarta), -apple-system, sans-serif;
   --font-serif: var(--font-plus-jakarta), -apple-system, sans-serif;
 
   --color-background: var(--background);
@@ -339,11 +339,19 @@
 /* Type utilities kept under their old names so existing call sites convert
    without edits. The display face is no longer a serif: Morfeo is Plus
    Jakarta Sans throughout, with tracking doing the work a serif used to. */
+/* Headings only, as on kunfupay.com: Plus Jakarta Sans 700 at -0.025em. */
 .font-serif-display {
   font-family: var(--font-plus-jakarta), -apple-system, sans-serif;
   font-weight: 700;
   letter-spacing: -0.025em;
 }
+
+/* Kunfupay has no monospace: the micro-label role is played by Inter 700
+   uppercase with open tracking (measured: 10-11px, +0.06 to +0.09em). Kept
+   under the old name so the ~50 call sites convert without edits. Tabular
+   numerals keep the column alignment the mono was actually earning on
+   counters and KPIs. */
 .font-mono-ui {
-  font-family: var(--font-roboto-mono), ui-monospace, monospace;
+  font-family: var(--font-inter), -apple-system, sans-serif;
+  font-variant-numeric: tabular-nums;
 }

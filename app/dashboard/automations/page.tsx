@@ -273,42 +273,49 @@ export default function AutomationsPage() {
                         <button
                             onClick={handleSaveAiContext}
                             disabled={aiContextSaving}
-                            className="px-4 py-2 rounded-xl bg-primary hover:brightness-95 text-black text-xs font-bold transition-all disabled:opacity-50"
+                            className="px-4 py-2 rounded-xl bg-primary hover:brightness-95 text-white text-xs font-bold transition-all disabled:opacity-50"
                         >
                             {aiContextSaving ? 'Saving...' : aiContextSaved ? 'Saved ✓' : 'Save'}
                         </button>
                     </div>
                 )}
 
-                {/* Tabs — editorial underline */}
-                                <div className="flex items-center gap-6 border-b border-border overflow-x-auto">
-                                    {tabs.map((tab) => {
-                                        const isActive = activeTab === tab.key
-                                        return (
-                                            <button
-                                                key={tab.key}
-                                                onClick={() => setActiveTab(tab.key)}
-                                                className={`relative flex items-center gap-2 pb-3 -mb-px font-mono-ui text-xs uppercase tracking-widest transition-colors border-b-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm ${
-                                                    isActive
-                                                        ? 'text-foreground border-accent-yellow'
-                                                        : 'text-muted-foreground border-transparent hover:text-foreground'
-                                                }`}
-                                            >
-                                                {tab.icon}
-                                                <span>{tab.label}</span>
-                                                {tab.count > 0 && (
-                                                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
-                                                        isActive
-                                                            ? 'bg-accent-yellow text-foreground'
-                                                            : 'bg-secondary text-secondary-foreground'
-                                                    }`}>
-                                                        {tab.count}
-                                                    </span>
-                                                )}
-                                            </button>
-                                        )
-                                    })}
-                                </div>
+                {/* Tabs — Morfeo segmented control: pill container, violet gradient on
+                    the selected item. The previous row was the fork's editorial
+                    underline, and its -mb-px against overflow-x-auto overflowed the
+                    container by 1px vertically; since one axis set to auto forces the
+                    other, that rendered a stray vertical scrollbar. */}
+                <div className="max-w-full overflow-x-auto">
+                    <div className="inline-flex items-center gap-1 rounded-full border border-border bg-muted p-1">
+                        {tabs.map((tab) => {
+                            const isActive = activeTab === tab.key
+                            return (
+                                <button
+                                    key={tab.key}
+                                    onClick={() => setActiveTab(tab.key)}
+                                    aria-pressed={isActive}
+                                    className={`flex shrink-0 items-center gap-2 rounded-full px-4 py-2 font-mono-ui text-xs uppercase tracking-widest transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                                        isActive
+                                            ? 'bg-gradient-to-br from-primary to-primary-active text-white shadow-sm'
+                                            : 'text-muted-foreground hover:text-foreground'
+                                    }`}
+                                >
+                                    {tab.icon}
+                                    <span>{tab.label}</span>
+                                    {tab.count > 0 && (
+                                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
+                                            isActive
+                                                ? 'bg-white/25 text-white'
+                                                : 'bg-background text-muted-foreground'
+                                        }`}>
+                                            {tab.count}
+                                        </span>
+                                    )}
+                                </button>
+                            )
+                        })}
+                    </div>
+                </div>
 
                 {/* Create Form (Collapsible) */}
                 {showCreateForm && (
