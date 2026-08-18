@@ -107,6 +107,9 @@ export interface AIDiagnostics {
   status?: number
   reply?: string
   error?: string
+  /** True when the model spent budget on reasoning before answering. */
+  usedReasoning?: boolean
+  tokensUsed?: number
   /** Populated when the model was rejected, so the right name is one call away. */
   availableModels?: string[]
 }
@@ -159,11 +162,14 @@ export async function diagnoseAIReply(
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
       body: JSON.stringify({
         model,
+        // Same budget the send path uses. A diagnostic on a smaller budget
+        // would pass while production came back empty: reasoning models spend
+        // tokens thinking before they write anything.
         messages: [
-          { role: "system", content: "Reply with exactly: ok" },
-          { role: "user", content: "ping" },
+          { role: "system", content: "You reply to Instagram DMs in one short sentence." },
+          { role: "user", content: "hola, tienen clases este fin de semana?" },
         ],
-        max_tokens: 10,
+        max_tokens: 150,
       }),
     })
     if (!res.ok) {
@@ -176,7 +182,20 @@ export async function diagnoseAIReply(
       return { ok: false, provider, endpoint, model, keySource, status: res.status, error: body.slice(0, 300), availableModels }
     }
     const data = await res.json()
-    return { ok: true, provider, endpoint, model, keySource, status: res.status, reply: data.choices?.[0]?.message?.content?.trim() }
+    const message = data.choices?.[0]?.message
+    const reply = message?.content?.trim() || ""
+    return {
+      ok: reply.length > 0,
+      provider,
+      endpoint,
+      model,
+      keySource,
+      status: res.status,
+      reply,
+      usedReasoning: Boolean(message?.reasoning),
+      tokensUsed: data.usage?.completion_tokens,
+      error: reply.length === 0 ? "Model answered with empty content — the token budget may have gone to reasoning" : undefined,
+    }
   } catch (e) {
     return { ok: false, provider, endpoint, model, keySource, error: e instanceof Error ? e.message : "network error" }
   }
