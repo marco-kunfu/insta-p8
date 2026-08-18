@@ -6,10 +6,11 @@ import {
   MessageSquare, Image as ImageIcon, Timer, Eye, Megaphone, Lock,
   Link2, Zap, ChevronDown, ChevronRight, ChevronLeft, X, Loader2,
   ArrowLeft, Phone, Video, Info, Sparkles, Smile, Camera, Mic, Image as PicIcon,
-  Globe
+  Globe, ShoppingBag
 } from "lucide-react"
 import { TagInput } from "@/components/ui/tag-input"
 import type { ProButton, QuickReplyOption, Automation } from "@/lib/types"
+import type { KunfupayProductOption } from "@/lib/kunfupay"
 import { toast } from "sonner"
 
 /* ============================================================
@@ -32,6 +33,9 @@ const STEPS = [
   { key: "settings", label: "Final Settings", sub: "Speed & restrictions" },
 ] as const
 
+/** Meta silently rejects generic-template buttons with longer labels. */
+const BUTTON_TITLE_MAX = 20
+
 export function CreateRuleForm({ userId, triggerSource, onSuccess, editRule }: CreateRuleFormProps) {
   const isEditing = !!editRule
   const [step, setStep] = useState(0)
@@ -52,6 +56,11 @@ export function CreateRuleForm({ userId, triggerSource, onSuccess, editRule }: C
   const [mediaUrl, setMediaUrl] = useState("")
   const [mediaType, setMediaType] = useState<"image" | "video" | "audio">("image")
   const [quickReplies, setQuickReplies] = useState<QuickReplyOption[]>([])
+
+  /* ---------- Kunfupay products ---------- */
+  const [products, setProducts] = useState<KunfupayProductOption[]>([])
+  const [productsState, setProductsState] = useState<"idle" | "loading" | "error">("idle")
+  const [showProductPicker, setShowProductPicker] = useState(false)
 
   /* ---------- Public comment reply ---------- */
   const [replyMode, setReplyMode] = useState<"both" | "dm_only" | "public_only">("both")
@@ -141,6 +150,38 @@ export function CreateRuleForm({ userId, triggerSource, onSuccess, editRule }: C
   const updateButton = (id: string, field: keyof ProButton, value: string) =>
     setButtons(buttons.map((b) => (b.id === id ? { ...b, [field]: value } : b)))
   const removeButton = (id: string) => setButtons(buttons.filter((b) => b.id !== id))
+
+  // Products are fetched on first open rather than on mount: most rules never
+  // touch the card type, and the call goes out to Kunfupay.
+  const openProductPicker = async () => {
+    setShowProductPicker(true)
+    if (products.length > 0 || productsState === "loading") return
+    setProductsState("loading")
+    try {
+      const res = await fetch("/api/kunfupay/products")
+      if (!res.ok) throw new Error(`products ${res.status}`)
+      setProducts(await res.json())
+      setProductsState("idle")
+    } catch {
+      setProductsState("error")
+    }
+  }
+  const addProductButton = (product: KunfupayProductOption) => {
+    if (buttons.length >= 3) return
+    setButtons([
+      ...buttons,
+      {
+        id: Date.now().toString(),
+        type: "web_url",
+        // Meta rejects button labels over BUTTON_TITLE_MAX, and product names
+        // routinely run longer — truncate here, the field stays editable.
+        title: product.name.slice(0, BUTTON_TITLE_MAX),
+        url: product.checkoutUrl,
+        payload: "",
+      },
+    ])
+    setShowProductPicker(false)
+  }
 
   const addQuickReply = () => {
     if (quickReplies.length >= 4) return
@@ -572,16 +613,61 @@ export function CreateRuleForm({ userId, triggerSource, onSuccess, editRule }: C
                       <div className="space-y-2.5">
                         <div className="flex items-center justify-between border-b border-border pb-2">
                           <FieldLabel>Interactive buttons ({buttons.length}/3)</FieldLabel>
-                          <button type="button" onClick={addButton} disabled={buttons.length >= 3}
-                            className="font-mono-ui text-[11px] text-muted-foreground hover:text-foreground disabled:opacity-40 flex items-center gap-1 transition-colors">
-                            <Plus className="w-3 h-3" /> Add button
-                          </button>
+                          <div className="flex items-center gap-3">
+                            <button type="button" onClick={openProductPicker} disabled={buttons.length >= 3}
+                              className="font-mono-ui text-[11px] text-muted-foreground hover:text-foreground disabled:opacity-40 flex items-center gap-1 transition-colors">
+                              <ShoppingBag className="w-3 h-3" /> Add product
+                            </button>
+                            <button type="button" onClick={addButton} disabled={buttons.length >= 3}
+                              className="font-mono-ui text-[11px] text-muted-foreground hover:text-foreground disabled:opacity-40 flex items-center gap-1 transition-colors">
+                              <Plus className="w-3 h-3" /> Add button
+                            </button>
+                          </div>
                         </div>
+                        {showProductPicker && (
+                          <div className="bg-white/[0.02] border border-border rounded-2xl p-3 space-y-2">
+                            <div className="flex items-center justify-between">
+                              <FieldLabel>Kunfupay products</FieldLabel>
+                              <button type="button" onClick={() => setShowProductPicker(false)}
+                                className="text-muted-foreground hover:text-foreground p-1 transition-colors">
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                            {productsState === "loading" && (
+                              <div className="flex items-center gap-2 py-3 text-muted-foreground">
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                <span className="font-mono-ui text-[11px]">Loading products...</span>
+                              </div>
+                            )}
+                            {productsState === "error" && (
+                              <p className="font-mono-ui text-[11px] text-red-400 py-2">
+                                Could not reach Kunfupay. Check that KUNFUPAY_API_KEY is set on this deployment.
+                              </p>
+                            )}
+                            {productsState === "idle" && products.length === 0 && (
+                              <p className="font-mono-ui text-[11px] text-muted-foreground py-2">No visible products found.</p>
+                            )}
+                            {productsState === "idle" && products.length > 0 && (
+                              <div className="max-h-48 overflow-y-auto space-y-1">
+                                {products.map((p) => (
+                                  <button key={p.id} type="button" onClick={() => addProductButton(p)}
+                                    className="w-full flex items-center justify-between gap-3 text-left px-2.5 py-2 rounded-xl hover:bg-white/[0.04] transition-colors">
+                                    <span className="text-xs text-foreground truncate">{p.name}</span>
+                                    <span className="font-mono-ui text-[10px] text-muted-foreground shrink-0">
+                                      {p.free ? "Free" : `${p.price} ${p.currency}`}
+                                    </span>
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )}
                         {buttons.map((btn) => (
                           <div key={btn.id} className="flex gap-2 items-center bg-white/[0.02] p-3 rounded-2xl border border-border">
                             <input
                               value={btn.title}
                               onChange={(e) => updateButton(btn.id, "title", e.target.value)}
+                              maxLength={BUTTON_TITLE_MAX}
                               className="h-8 text-xs flex-1 bg-transparent border-none px-2 text-foreground placeholder:text-muted-foreground focus:outline-none"
                               placeholder="Button label"
                             />
