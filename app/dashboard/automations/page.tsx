@@ -166,7 +166,7 @@ export default function AutomationsPage() {
                                     aria-pressed={aiEnabled}
                                     className={`flex items-center gap-2 h-9 px-4 rounded-full font-mono-ui text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                                         aiEnabled
-                                            ? 'bg-accent-yellow text-foreground border border-accent-yellow'
+                                            ? 'bg-primary text-primary-foreground border border-primary'
                                             : 'bg-card text-muted-foreground border border-border hover:text-foreground hover:bg-accent'
                                     }`}
                                 >
