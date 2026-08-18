@@ -619,7 +619,7 @@ export function CreateRuleForm({ userId, triggerSource, onSuccess, editRule }: C
                       </div>
                       <div className="space-y-2.5">
                         <div className="flex items-center justify-between border-b border-border pb-2">
-                          <FieldLabel>Interactive buttons ({buttons.length}/3)</FieldLabel>
+                          <p className="morfeo-eyebrow text-muted-foreground">Interactive buttons ({buttons.length}/3)</p>
                           <div className="flex items-center gap-2">
                             {/* Products are the point of this integration, so they get a
                                 filled pill instead of sitting as a peer of a plain link. */}
@@ -651,9 +651,16 @@ export function CreateRuleForm({ userId, triggerSource, onSuccess, editRule }: C
                         )}
 
                         {showProductPicker && (
-                          <div className="space-y-2 rounded-2xl border border-primary/25 bg-primary-softer p-3">
-                            <div className="flex items-center justify-between">
-                              <FieldLabel>Kunfupay products</FieldLabel>
+                          // White surface with a lilac hairline, like their list cards.
+                          // The violet is spent on the chip and the hover, not on the
+                          // border and background too — that read as muddy.
+                          <div className="rounded-2xl border border-border bg-card p-1.5 shadow-sm">
+                            {/* Plain <p>, not FieldLabel: that carries mb-2, which throws
+                                the label out of alignment inside a flex row. */}
+                            <div className="flex items-center justify-between px-2 pb-1.5 pt-1.5">
+                              <p className="morfeo-eyebrow text-muted-foreground">
+                                Kunfupay products{products.length > 0 ? ` · ${products.length}` : ""}
+                              </p>
                               <button type="button" onClick={() => setShowProductPicker(false)} aria-label="Close product list"
                                 className="p-1 text-muted-foreground transition-colors hover:text-foreground">
                                 <X className="w-3.5 h-3.5" />
@@ -661,43 +668,47 @@ export function CreateRuleForm({ userId, triggerSource, onSuccess, editRule }: C
                             </div>
 
                             {productsState === "loading" && (
-                              <div className="flex items-center gap-2 py-3 text-muted-foreground">
+                              <div className="flex items-center gap-2 px-2 py-3 text-muted-foreground">
                                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
                                 <span className="text-xs">Loading your products...</span>
                               </div>
                             )}
 
                             {productsState === "error" && (
-                              <p className="py-2 text-xs text-destructive">
+                              <p className="px-2 py-2 text-xs text-destructive">
                                 Could not reach Kunfupay. Check that KUNFUPAY_API_KEY is set on this deployment.
                               </p>
                             )}
 
                             {productsState === "idle" && products.length === 0 && (
-                              <p className="py-2 text-xs text-muted-foreground">
+                              <p className="px-2 py-2 text-xs text-muted-foreground">
                                 No visible products found in your Kunfupay account.
                               </p>
                             )}
 
                             {productsState === "idle" && products.length > 0 && (
-                              <div className="max-h-52 space-y-1 overflow-y-auto">
+                              <div className="max-h-52 overflow-y-auto">
                                 {products.map((prod) => (
                                   <button
                                     key={prod.id}
                                     type="button"
                                     onClick={() => addProductButton(prod)}
-                                    className="flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left transition-colors hover:bg-primary-soft"
+                                    className="group flex w-full items-center gap-3 rounded-xl px-2 py-2.5 text-left transition-colors hover:bg-primary-softer"
                                   >
-                                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary">
-                                      <ShoppingBag className="h-3.5 w-3.5" />
+                                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary">
+                                      <ShoppingBag className="h-4 w-4" />
                                     </span>
                                     <span className="min-w-0 flex-1">
                                       <span className="block truncate text-[13px] font-medium text-foreground">{prod.name}</span>
-                                      <span className="morfeo-eyebrow block text-muted-foreground">
+                                      <span className="block text-[11px] text-muted-foreground">
                                         {prod.free ? "Free" : `${prod.price} ${prod.currency.toUpperCase()}`}
                                       </span>
                                     </span>
-                                    <Plus className="h-3.5 w-3.5 shrink-0 text-primary" />
+                                    {/* An explicit affordance: a lone "+" at the far edge did
+                                        not read as the row's action. */}
+                                    <span className="flex h-6 shrink-0 items-center gap-1 rounded-full border border-border px-2 text-[11px] font-semibold text-primary transition-colors group-hover:border-primary/40 group-hover:bg-primary-soft">
+                                      <Plus className="h-3 w-3" /> Add
+                                    </span>
                                   </button>
                                 ))}
                               </div>
