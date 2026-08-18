@@ -103,6 +103,22 @@ export interface AIDiagnostics {
   status?: number
   reply?: string
   error?: string
+  /** Populated when the model was rejected, so the right name is one call away. */
+  availableModels?: string[]
+}
+
+/** Providers here are OpenAI-compatible, so /models sits beside /chat/completions. */
+async function listModels(endpoint: string, apiKey: string): Promise<string[] | undefined> {
+  try {
+    const res = await fetch(endpoint.replace(/\/chat\/completions$/, "/models"), {
+      headers: { Authorization: `Bearer ${apiKey}` },
+    })
+    if (!res.ok) return undefined
+    const data = await res.json()
+    return (data.data || []).map((m: any) => m.id).filter(Boolean).sort()
+  } catch {
+    return undefined
+  }
 }
 
 /**
@@ -148,7 +164,12 @@ export async function diagnoseAIReply(
     })
     if (!res.ok) {
       const body = await res.text()
-      return { ok: false, provider, endpoint, model, keySource, status: res.status, error: body.slice(0, 300) }
+      // A rejected model is the one failure where the fix is a specific string
+      // the provider can hand us, so fetch it rather than making anyone guess.
+      const availableModels = /model_not_found|does not exist/i.test(body)
+        ? await listModels(endpoint, apiKey)
+        : undefined
+      return { ok: false, provider, endpoint, model, keySource, status: res.status, error: body.slice(0, 300), availableModels }
     }
     const data = await res.json()
     return { ok: true, provider, endpoint, model, keySource, status: res.status, reply: data.choices?.[0]?.message?.content?.trim() }
