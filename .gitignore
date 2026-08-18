@@ -23,6 +23,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# supabase cli — local link state (project ref, pooler url)
+supabase/.temp
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
