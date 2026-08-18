@@ -273,6 +273,18 @@
   background: linear-gradient(to right, transparent, rgba(188, 178, 255, 0.55), transparent);
 }
 
+/* Halo over a hero card, measured in the dashboard — #8 */
+.morfeo-halo {
+  background-image:
+    radial-gradient(70% 45% at 50% -5%, rgba(115, 75, 252, 0.10), transparent 70%),
+    linear-gradient(#ffffff, #fbfaff);
+}
+.dark .morfeo-halo {
+  background-image:
+    radial-gradient(70% 45% at 50% -5%, rgba(115, 75, 252, 0.18), transparent 70%),
+    linear-gradient(#1a1a1e, #141419);
+}
+
 /* The primary is never flat — #4 */
 .morfeo-cta {
   background-image: linear-gradient(to right bottom, #734bfc, #5c21e0);

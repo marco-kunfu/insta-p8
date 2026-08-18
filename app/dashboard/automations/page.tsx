@@ -195,10 +195,10 @@ export default function AutomationsPage() {
 
                 {/* AI Context Panel */}
                 {showAiContext && (
-                    <div className="rounded-2xl border border-[#734bfc]/20 bg-[#734bfc]/[0.04] p-5 animate-in fade-in slide-in-from-top-2 duration-200 space-y-4">
+                    <div className="rounded-2xl border border-primary/20 bg-primary/[0.04] p-5 animate-in fade-in slide-in-from-top-2 duration-200 space-y-4">
                         <div className="flex items-center gap-2">
-                            <Brain className="w-4 h-4 text-[#734bfc]" />
-                            <span className="text-sm font-semibold text-[#734bfc]">AI Settings</span>
+                            <Brain className="w-4 h-4 text-primary" />
+                            <span className="text-sm font-semibold text-primary">AI Settings</span>
                         </div>
 
                         {/* API Key */}
@@ -216,7 +216,7 @@ export default function AutomationsPage() {
                                         value={groqApiKey}
                                         onChange={e => setGroqApiKey(e.target.value)}
                                         placeholder={hasApiKey ? "Enter new key to replace…" : "sk_… or gsk_…"}
-                                        className="flex-1 bg-muted border border-border rounded-xl px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-[#734bfc]/50 transition-colors font-mono"
+                                        className="flex-1 bg-muted border border-border rounded-xl px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 transition-colors font-mono"
                                     />
                                     {hasApiKey && (
                                         <button onClick={() => setShowApiKey(false)} className="px-3 py-2.5 rounded-xl border border-border text-muted-foreground text-xs hover:text-foreground transition-colors">Cancel</button>
@@ -240,7 +240,7 @@ export default function AutomationsPage() {
                                 value={aiBaseUrl}
                                 onChange={e => setAiBaseUrl(e.target.value)}
                                 placeholder="https://api.groq.com/v1  (default) or your own endpoint"
-                                className="w-full bg-muted border border-border rounded-xl px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-[#734bfc]/50 transition-colors font-mono"
+                                className="w-full bg-muted border border-border rounded-xl px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 transition-colors font-mono"
                             />
                             <p className="text-[11px] text-neutral-600">Any OpenAI-compatible endpoint works — Groq, OpenAI, Together, your own proxy.</p>
                         </div>
@@ -253,7 +253,7 @@ export default function AutomationsPage() {
                                 value={aiModel}
                                 onChange={e => setAiModel(e.target.value)}
                                 placeholder="llama-3.1-8b-instant  (Groq default)"
-                                className="w-full bg-muted border border-border rounded-xl px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-[#734bfc]/50 transition-colors font-mono"
+                                className="w-full bg-muted border border-border rounded-xl px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 transition-colors font-mono"
                             />
                         </div>
 
@@ -266,14 +266,14 @@ export default function AutomationsPage() {
                                 onChange={e => setAiContext(e.target.value)}
                                 placeholder={`e.g. This is a fitness coaching account. I sell online training programs (₹2999/mo). My tone is motivating but chill. If someone asks about pricing, tell them to DM for a free consultation. Never promise specific results.`}
                                 rows={4}
-                                className="w-full bg-muted border border-border rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:border-[#734bfc]/50 transition-colors"
+                                className="w-full bg-muted border border-border rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:border-primary/50 transition-colors"
                             />
                         </div>
 
                         <button
                             onClick={handleSaveAiContext}
                             disabled={aiContextSaving}
-                            className="px-4 py-2 rounded-xl bg-[#734bfc] hover:brightness-95 text-black text-xs font-bold transition-all disabled:opacity-50"
+                            className="px-4 py-2 rounded-xl bg-primary hover:brightness-95 text-black text-xs font-bold transition-all disabled:opacity-50"
                         >
                             {aiContextSaving ? 'Saving...' : aiContextSaved ? 'Saved ✓' : 'Save'}
                         </button>
