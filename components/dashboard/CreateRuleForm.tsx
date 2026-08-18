@@ -178,6 +178,13 @@ export function CreateRuleForm({ userId, triggerSource, onSuccess, editRule }: C
         title: product.name.slice(0, BUTTON_TITLE_MAX),
         url: product.checkoutUrl,
         payload: "",
+        product: {
+          id: product.id,
+          name: product.name,
+          price: product.price,
+          currency: product.currency,
+          free: product.free,
+        },
       },
     ])
     setShowProductPicker(false)
@@ -257,7 +264,7 @@ export function CreateRuleForm({ userId, triggerSource, onSuccess, editRule }: C
           if (b.type === "web_url") {
             let cleanUrl = b.url?.trim() || ""
             if (cleanUrl.startsWith("https://https://")) cleanUrl = cleanUrl.replace("https://https://", "https://")
-            return { type: "web_url" as const, title: b.title, url: cleanUrl }
+            return { type: "web_url" as const, title: b.title, url: cleanUrl, ...(b.product ? { product: b.product } : {}) }
           }
           return { type: "postback" as const, title: b.title, payload: b.payload }
         })
@@ -613,82 +620,156 @@ export function CreateRuleForm({ userId, triggerSource, onSuccess, editRule }: C
                       <div className="space-y-2.5">
                         <div className="flex items-center justify-between border-b border-border pb-2">
                           <FieldLabel>Interactive buttons ({buttons.length}/3)</FieldLabel>
-                          <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-2">
+                            {/* Products are the point of this integration, so they get a
+                                filled pill instead of sitting as a peer of a plain link. */}
                             <button type="button" onClick={openProductPicker} disabled={buttons.length >= 3}
-                              className="font-mono-ui text-[11px] text-muted-foreground hover:text-foreground disabled:opacity-40 flex items-center gap-1 transition-colors">
-                              <ShoppingBag className="w-3 h-3" /> Add product
+                              className="flex items-center gap-1.5 rounded-full bg-primary-soft px-3 py-1.5 text-xs font-semibold text-primary transition-colors hover:bg-primary/15 disabled:opacity-40">
+                              <ShoppingBag className="w-3.5 h-3.5" /> Add product
                             </button>
                             <button type="button" onClick={addButton} disabled={buttons.length >= 3}
-                              className="font-mono-ui text-[11px] text-muted-foreground hover:text-foreground disabled:opacity-40 flex items-center gap-1 transition-colors">
-                              <Plus className="w-3 h-3" /> Add button
+                              className="flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40">
+                              <Plus className="w-3 h-3" /> Custom link
                             </button>
                           </div>
                         </div>
+
+                        {buttons.length === 0 && !showProductPicker && (
+                          <button
+                            type="button"
+                            onClick={openProductPicker}
+                            className="flex w-full items-center gap-3 rounded-2xl border border-border-card bg-primary-softer px-4 py-3.5 text-left transition-colors hover:border-primary/40 hover:bg-primary-soft"
+                          >
+                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary">
+                              <ShoppingBag className="h-4 w-4" />
+                            </span>
+                            <span className="min-w-0">
+                              <span className="block text-[13px] font-semibold text-foreground">Send a Kunfupay product</span>
+                              <span className="block text-[11px] text-muted-foreground">Its checkout link fills the button — one tap from comment to paid.</span>
+                            </span>
+                          </button>
+                        )}
+
                         {showProductPicker && (
-                          <div className="bg-primary-softer border border-border rounded-2xl p-3 space-y-2">
+                          <div className="space-y-2 rounded-2xl border border-primary/25 bg-primary-softer p-3">
                             <div className="flex items-center justify-between">
                               <FieldLabel>Kunfupay products</FieldLabel>
-                              <button type="button" onClick={() => setShowProductPicker(false)}
-                                className="text-muted-foreground hover:text-foreground p-1 transition-colors">
+                              <button type="button" onClick={() => setShowProductPicker(false)} aria-label="Close product list"
+                                className="p-1 text-muted-foreground transition-colors hover:text-foreground">
                                 <X className="w-3.5 h-3.5" />
                               </button>
                             </div>
+
                             {productsState === "loading" && (
                               <div className="flex items-center gap-2 py-3 text-muted-foreground">
                                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                <span className="font-mono-ui text-[11px]">Loading products...</span>
+                                <span className="text-xs">Loading your products...</span>
                               </div>
                             )}
+
                             {productsState === "error" && (
-                              <p className="font-mono-ui text-[11px] text-red-400 py-2">
+                              <p className="py-2 text-xs text-destructive">
                                 Could not reach Kunfupay. Check that KUNFUPAY_API_KEY is set on this deployment.
                               </p>
                             )}
+
                             {productsState === "idle" && products.length === 0 && (
-                              <p className="font-mono-ui text-[11px] text-muted-foreground py-2">No visible products found.</p>
+                              <p className="py-2 text-xs text-muted-foreground">
+                                No visible products found in your Kunfupay account.
+                              </p>
                             )}
+
                             {productsState === "idle" && products.length > 0 && (
-                              <div className="max-h-48 overflow-y-auto space-y-1">
-                                {products.map((p) => (
-                                  <button key={p.id} type="button" onClick={() => addProductButton(p)}
-                                    className="w-full flex items-center justify-between gap-3 text-left px-2.5 py-2 rounded-xl hover:bg-primary-soft transition-colors">
-                                    <span className="text-xs text-foreground truncate">{p.name}</span>
-                                    <span className="font-mono-ui text-[10px] text-muted-foreground shrink-0">
-                                      {p.free ? "Free" : `${p.price} ${p.currency}`}
+                              <div className="max-h-52 space-y-1 overflow-y-auto">
+                                {products.map((prod) => (
+                                  <button
+                                    key={prod.id}
+                                    type="button"
+                                    onClick={() => addProductButton(prod)}
+                                    className="flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left transition-colors hover:bg-primary-soft"
+                                  >
+                                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary">
+                                      <ShoppingBag className="h-3.5 w-3.5" />
                                     </span>
+                                    <span className="min-w-0 flex-1">
+                                      <span className="block truncate text-[13px] font-medium text-foreground">{prod.name}</span>
+                                      <span className="morfeo-eyebrow block text-muted-foreground">
+                                        {prod.free ? "Free" : `${prod.price} ${prod.currency.toUpperCase()}`}
+                                      </span>
+                                    </span>
+                                    <Plus className="h-3.5 w-3.5 shrink-0 text-primary" />
                                   </button>
                                 ))}
                               </div>
                             )}
                           </div>
                         )}
+
                         {buttons.map((btn) => (
-                          <div key={btn.id} className="flex gap-2 items-center bg-primary-softer p-3 rounded-2xl border border-border">
-                            <input
-                              value={btn.title}
-                              onChange={(e) => updateButton(btn.id, "title", e.target.value)}
-                              maxLength={BUTTON_TITLE_MAX}
-                              className="h-8 text-xs flex-1 bg-transparent border-none px-2 text-foreground placeholder:text-muted-foreground focus:outline-none"
-                              placeholder="Button label"
-                            />
-                            <select
-                              value={btn.type}
-                              onChange={(e) => updateButton(btn.id, "type", e.target.value)}
-                              className="h-8 text-[11px] bg-card border border-border rounded-lg px-2 text-foreground focus:outline-none"
-                            >
-                              <option value="web_url">Open Link</option>
-                              <option value="postback">Trigger Flow</option>
-                            </select>
-                            <input
-                              value={btn.type === "web_url" ? btn.url : btn.payload}
-                              onChange={(e) => updateButton(btn.id, btn.type === "web_url" ? "url" : "payload", e.target.value)}
-                              className="h-8 text-xs flex-1 bg-transparent border-none px-2 text-foreground placeholder:text-muted-foreground focus:outline-none font-mono"
-                              placeholder={btn.type === "web_url" ? "https://link" : "flow_keyword"}
-                            />
-                            <button type="button" onClick={() => removeButton(btn.id)} className="text-muted-foreground hover:text-red-400 p-1.5 transition-colors">
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
+                          btn.product ? (
+                            // A product keeps its identity: name and price up front, the
+                            // checkout URL is not an editable field the user can break.
+                            <div key={btn.id} className="rounded-2xl border border-primary/25 bg-primary-softer p-3">
+                              <div className="flex items-center gap-3">
+                                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary">
+                                  <ShoppingBag className="h-4 w-4" />
+                                </span>
+                                <div className="min-w-0 flex-1">
+                                  <p className="truncate text-[13px] font-semibold text-foreground">{btn.product.name}</p>
+                                  <p className="morfeo-eyebrow text-primary">
+                                    {btn.product.free ? "Free" : `${btn.product.price} ${btn.product.currency.toUpperCase()}`}
+                                  </p>
+                                </div>
+                                <button type="button" onClick={() => removeButton(btn.id)} aria-label="Remove product"
+                                  className="p-1.5 text-muted-foreground transition-colors hover:text-destructive">
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                              <div className="mt-2.5 flex items-center gap-2 border-t border-primary/15 pt-2.5">
+                                <span className="morfeo-eyebrow shrink-0 text-muted-foreground">Label</span>
+                                <input
+                                  value={btn.title}
+                                  onChange={(e) => updateButton(btn.id, "title", e.target.value)}
+                                  maxLength={BUTTON_TITLE_MAX}
+                                  className="h-7 min-w-0 flex-1 rounded-lg border border-border bg-card px-2 text-xs text-foreground focus:outline-none focus:border-primary/50"
+                                  placeholder="Button label"
+                                />
+                                <span className="shrink-0 text-[10px] text-muted-foreground">{btn.title.length}/{BUTTON_TITLE_MAX}</span>
+                              </div>
+                            </div>
+                          ) : (
+                            // Generic link: destination gets its own full-width row so the
+                            // three fields stop fighting for space on one line.
+                            <div key={btn.id} className="space-y-2 rounded-2xl border border-border bg-primary-softer p-3">
+                              <div className="flex items-center gap-2">
+                                <input
+                                  value={btn.title}
+                                  onChange={(e) => updateButton(btn.id, "title", e.target.value)}
+                                  maxLength={BUTTON_TITLE_MAX}
+                                  className="h-8 min-w-0 flex-1 rounded-lg border border-border bg-card px-2.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50"
+                                  placeholder="Button label"
+                                />
+                                <select
+                                  value={btn.type}
+                                  onChange={(e) => updateButton(btn.id, "type", e.target.value)}
+                                  className="h-8 shrink-0 rounded-lg border border-border bg-card pl-2.5 pr-7 text-xs text-foreground focus:outline-none focus:border-primary/50"
+                                >
+                                  <option value="web_url">Open link</option>
+                                  <option value="postback">Trigger flow</option>
+                                </select>
+                                <button type="button" onClick={() => removeButton(btn.id)} aria-label="Remove button"
+                                  className="shrink-0 p-1.5 text-muted-foreground transition-colors hover:text-destructive">
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                              <input
+                                value={btn.type === "web_url" ? btn.url : btn.payload}
+                                onChange={(e) => updateButton(btn.id, btn.type === "web_url" ? "url" : "payload", e.target.value)}
+                                className="h-8 w-full rounded-lg border border-border bg-card px-2.5 font-mono text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50"
+                                placeholder={btn.type === "web_url" ? "https://link" : "flow_keyword"}
+                              />
+                            </div>
+                          )
                         ))}
                       </div>
                     </div>

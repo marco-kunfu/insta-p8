@@ -1,12 +1,27 @@
 // Shared types for the automation system
 export type ButtonAction = "web_url" | "postback"
 
+/**
+ * Where a web_url button's destination came from. Kept alongside the url so a
+ * Kunfupay product stays recognisable as one after insertion instead of
+ * degrading into an anonymous link — the UI renders it as a product row, and
+ * a future sync could refresh a stale checkout URL.
+ */
+export interface ButtonProduct {
+  id: string
+  name: string
+  price: number
+  currency: string
+  free?: boolean
+}
+
 export interface ProButton {
   id: string
   type: ButtonAction
   title: string
   url?: string
   payload?: string
+  product?: ButtonProduct
 }
 
 export interface QuickReplyOption {
