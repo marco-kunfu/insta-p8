@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
+import { safeLocal, safeSession } from "@/lib/safe-storage"
 
 export function useInstagramSession() {
     const [username, setUsername] = useState<string | null>(null)
@@ -21,7 +22,11 @@ export function useInstagramSession() {
                 try {
                     // Link the connected Instagram account to the Kunfupay vendor
                     // resolved by the embed handshake (KunfupayEmbedProvider).
-                    const vendorId = window.sessionStorage.getItem("kunfupay_vendor_id")
+                    // `state` carries it when this runs in a popup opened from
+                    // the iframe, which starts with an empty sessionStorage.
+                    const vendorId =
+                        searchParams.get("state") ||
+                        safeSession.getItem("kunfupay_vendor_id")
                     const res = await fetch("/api/instagram/callback", {
                         method: "POST",
                         body: JSON.stringify({ code, vendorId }),
@@ -29,13 +34,21 @@ export function useInstagramSession() {
                     const data = await res.json()
 
                     if (data.success) {
-                        localStorage.setItem("ig_user_id", data.userId)
-                        localStorage.setItem("ig_username", data.username)
-                        if (data.profilePic) localStorage.setItem("ig_profile_pic", data.profilePic)
+                        safeLocal.setItem("ig_user_id", data.userId)
+                        safeLocal.setItem("ig_username", data.username)
+                        if (data.profilePic) safeLocal.setItem("ig_profile_pic", data.profilePic)
 
                         setUserId(data.userId)
                         setUsername(data.username)
                         setProfilePic(data.profilePic || null)
+
+                        // Popup flow: hand control back to the embedded app that
+                        // opened us and get out of the way.
+                        if (window.opener && window.opener !== window) {
+                            window.opener.postMessage({ type: "insta:linked" }, "*")
+                            window.close()
+                            return
+                        }
                         // Remove code from URL
                         router.replace("/embed")
                     }
@@ -45,13 +58,13 @@ export function useInstagramSession() {
             }
             // CASE B: Restore Session from LocalStorage
             else {
-                const savedId = localStorage.getItem("ig_user_id")
-                const savedName = localStorage.getItem("ig_username")
+                const savedId = safeLocal.getItem("ig_user_id")
+                const savedName = safeLocal.getItem("ig_username")
 
                 if (savedId && savedName) {
                     setUserId(savedId)
                     setUsername(savedName)
-                    setProfilePic(localStorage.getItem("ig_profile_pic"))
+                    setProfilePic(safeLocal.getItem("ig_profile_pic"))
                 }
             }
             setIsLoading(false)
@@ -60,10 +73,22 @@ export function useInstagramSession() {
         handleSession()
     }, [searchParams, router])
 
+    // The login popup reports back when it has linked the account. Nothing from
+    // the message is trusted beyond the fact that it arrived — we just re-read
+    // our own session.
+    useEffect(() => {
+        const onMessage = (event: MessageEvent) => {
+            if (event.data?.type !== "insta:linked") return
+            window.location.reload()
+        }
+        window.addEventListener("message", onMessage)
+        return () => window.removeEventListener("message", onMessage)
+    }, [])
+
     const logout = () => {
-        localStorage.removeItem("ig_user_id")
-        localStorage.removeItem("ig_username")
-        localStorage.removeItem("ig_profile_pic")
+        safeLocal.removeItem("ig_user_id")
+        safeLocal.removeItem("ig_username")
+        safeLocal.removeItem("ig_profile_pic")
         document.cookie = "insta_session=; Max-Age=0; path=/;"
         setUsername(null)
         setUserId(null)

@@ -3,6 +3,7 @@
 import { useEffect } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { LandingPage } from "@/components/layout/landing-page"
+import { safeLocal } from "@/lib/safe-storage"
 import { Loader2 } from "lucide-react"
 
 export default function Home() {
@@ -12,7 +13,7 @@ export default function Home() {
   useEffect(() => {
     // Check if we have an active session or a callback code
     const code = searchParams.get("code")
-    const savedId = localStorage.getItem("ig_user_id")
+    const savedId = safeLocal.getItem("ig_user_id")
 
     if (code || savedId) {
       // If code exists, Redirect to dashboard to handle the handshake (via the new hook)

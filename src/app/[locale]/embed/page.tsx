@@ -28,7 +28,12 @@ export default function DashboardPage() {
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
-        if (!userId) return
+        // No connected Instagram account yet: there are no stats to fetch, and
+        // leaving `loading` set would spin forever instead of prompting.
+        if (!userId) {
+            if (!isSessionLoading) setLoading(false)
+            return
+        }
 
         const fetchStats = async () => {
             try {
@@ -45,12 +50,35 @@ export default function DashboardPage() {
         }
 
         fetchStats()
-    }, [userId])
+    }, [userId, isSessionLoading])
 
     if (isSessionLoading || loading) {
         return (
             <div className="flex items-center justify-center min-h-[50vh]">
                 <Loader2 className="w-8 h-8 text-muted-foreground animate-spin" />
+            </div>
+        )
+    }
+
+    if (!userId) {
+        return (
+            <div className="flex min-h-[50vh] flex-col items-center justify-center gap-3 p-8 text-center">
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary-soft text-primary">
+                    <Zap className="h-5 w-5" />
+                </div>
+                <h1 className="font-serif-display text-2xl text-foreground">
+                    Connect your Instagram account
+                </h1>
+                <p className="max-w-sm text-[13px] text-muted-foreground">
+                    Link a business account to start automating DMs. Instagram login opens in
+                    its own tab, since it cannot run inside the Kunfupay dashboard.
+                </p>
+                <Link
+                    href="/"
+                    className="mt-1 rounded-full bg-primary px-5 py-2 text-xs font-bold text-primary-foreground transition-colors hover:bg-primary/90"
+                >
+                    Connect Instagram
+                </Link>
             </div>
         )
     }
