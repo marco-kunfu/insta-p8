@@ -19,7 +19,7 @@ export function LandingPage() {
   const handleTestLogin = () => {
     localStorage.setItem("ig_user_id", "9999999999")
     localStorage.setItem("ig_username", "test_creator")
-    router.push("/dashboard")
+    router.push("/embed")
   }
 
   return (

@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { getSupabaseServerClient } from "@/lib/supabase-server"
+import { db } from "@/lib/db"
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams
@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { code } = body
+    const { code, vendorId } = body
     if (!code) return NextResponse.json({ error: "No code" }, { status: 400 })
 
     // 1. Env Vars
@@ -97,25 +97,33 @@ export async function POST(request: NextRequest) {
       console.error("[v0] /me request failed:", e)
     }
 
-    // 6. Save/Update User
-    const supabase = await getSupabaseServerClient()
+    // 5. Ensure the Kunfupay vendor row exists (FK target for users.vendor_id).
+    // In dev (?vendorId=test-vendor) the vendor may not have been created yet.
+    if (vendorId) {
+      await db.vendor.upsert({
+        where: { id: vendorId },
+        create: { id: vendorId, isActive: true },
+        update: {},
+      })
+    }
 
-    const updates: any = {
+    // 6. Save/Update User
+    const updates = {
       username,
-      access_token: accessToken,
-      token_expires_at: new Date(Date.now() + expiresIn * 1000).toISOString(),
-      updated_at: new Date().toISOString(),
-      business_account_id: businessAccountId,
-      page_id: businessAccountId, // Always keep in sync
+      accessToken,
+      tokenExpiresAt: new Date(Date.now() + expiresIn * 1000),
+      businessAccountId: BigInt(businessAccountId),
+      pageId: businessAccountId, // Always keep in sync
+      ...(vendorId ? { vendorId } : {}),
     }
 
     console.log(`[v0] 💾 Saving user: ${username} | id=${loginUserId} | biz_id=${businessAccountId}`)
 
-    const { error: upsertError } = await supabase
-      .from("users")
-      .upsert({ id: loginUserId, ...updates }, { onConflict: "id" })
-
-    if (upsertError) throw upsertError
+    await db.instagramAccount.upsert({
+      where: { id: BigInt(loginUserId) },
+      create: { id: BigInt(loginUserId), ...updates },
+      update: updates,
+    })
 
     const response = NextResponse.json({ success: true, username, userId: loginUserId, profilePic })
     response.cookies.set("insta_session", JSON.stringify({ username, userId: loginUserId }), {

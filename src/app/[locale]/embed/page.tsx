@@ -137,8 +137,8 @@ export default function DashboardPage() {
                     />
                     <div className="space-y-1">
                         {[
-                            { icon: <Zap className="h-4 w-4" />, label: "New rule", desc: "Build an automation", href: "/dashboard/automations" },
-                            { icon: <Users className="h-4 w-4" />, label: "View audience", desc: "See who you reached", href: "/dashboard/inbox" },
+                            { icon: <Zap className="h-4 w-4" />, label: "New rule", desc: "Build an automation", href: "/embed/automations" },
+                            { icon: <Users className="h-4 w-4" />, label: "View audience", desc: "See who you reached", href: "/embed/inbox" },
                         ].map((a) => (
                             <Link
                                 key={a.label}

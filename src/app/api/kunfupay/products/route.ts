@@ -1,11 +1,14 @@
-import { NextResponse } from "next/server"
-import { KunfupayError, listProducts, type KunfupayProductOption } from "@/lib/kunfupay"
+import { NextRequest, NextResponse } from "next/server"
+import { KunfupayError, listProducts, type KunfupayProductOption } from "@/lib/kunfupay-products"
 
-// Proxy so the API key stays server-side. Only the fields the DM card needs
-// are forwarded — the rest of the Kunfupay payload never reaches the browser.
-export async function GET() {
+// Proxy so the app credentials stay server-side. The iframe sends the
+// session's embed_token in X-Kunfupay-Embed-Token; only the fields the DM
+// card needs are forwarded — the rest of the payload never reaches the browser.
+export async function GET(req: NextRequest) {
+  const embedToken = req.headers.get("x-kunfupay-embed-token") ?? ""
+
   try {
-    const { data } = await listProducts({ status: "active", limit: 100 })
+    const { data } = await listProducts(embedToken, { status: "active", limit: 100 })
 
     const options: KunfupayProductOption[] = data
       // A product without a checkout URL can't back a web_url button, and an
@@ -24,12 +27,11 @@ export async function GET() {
   } catch (error) {
     if (error instanceof KunfupayError) {
       console.error("[kunfupay] products GET:", error.message)
-      // 503 when this deployment simply isn't wired to Kunfupay yet, 502 when
-      // Kunfupay itself rejected or failed the call.
-      return NextResponse.json(
-        { error: error.code },
-        { status: error.code === "missing_api_key" ? 503 : 502 },
-      )
+      // 401 when the session has no live embed token (expired or dev shortcut),
+      // 502 when Kunfupay itself rejected or failed the call.
+      const status =
+        error.code === "missing_token" || error.code === "invalid_token" ? 401 : 502
+      return NextResponse.json({ error: error.code }, { status })
     }
     console.error("[kunfupay] products GET unexpected:", error)
     return NextResponse.json({ error: "api_error" }, { status: 500 })

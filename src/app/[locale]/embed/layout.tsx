@@ -3,9 +3,22 @@
 import { Sidebar } from "@/components/layout/sidebar"
 import { TopBar } from "@/components/layout/topbar"
 import { useInstagramSession } from "@/hooks/use-instagram-session"
+import { KunfupayEmbedProvider } from "@/components/kunfupay/embed-provider"
 import { Loader2 } from "lucide-react"
 
-export default function DashboardLayout({
+export default function EmbedLayout({
+    children,
+}: {
+    children: React.ReactNode
+}) {
+    return (
+        <KunfupayEmbedProvider>
+            <EmbedShell>{children}</EmbedShell>
+        </KunfupayEmbedProvider>
+    )
+}
+
+function EmbedShell({
     children,
 }: {
     children: React.ReactNode

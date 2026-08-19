@@ -10,7 +10,8 @@ import {
 } from "lucide-react"
 import { TagInput } from "@/components/ui/tag-input"
 import type { ProButton, QuickReplyOption, Automation } from "@/lib/types"
-import type { KunfupayProductOption } from "@/lib/kunfupay"
+import type { KunfupayProductOption } from "@/lib/kunfupay-products"
+import { embedAuthHeaders } from "@/lib/embed-session"
 import { toast } from "sonner"
 
 /* ============================================================
@@ -158,7 +159,7 @@ export function CreateRuleForm({ userId, triggerSource, onSuccess, editRule }: C
     if (products.length > 0 || productsState === "loading") return
     setProductsState("loading")
     try {
-      const res = await fetch("/api/kunfupay/products")
+      const res = await fetch("/api/kunfupay/products", { headers: embedAuthHeaders() })
       if (!res.ok) throw new Error(`products ${res.status}`)
       setProducts(await res.json())
       setProductsState("idle")
@@ -698,7 +699,7 @@ export function CreateRuleForm({ userId, triggerSource, onSuccess, editRule }: C
 
                             {productsState === "error" && (
                               <p className="px-2 py-2 text-xs text-destructive">
-                                Could not reach Kunfupay. Check that KUNFUPAY_API_KEY is set on this deployment.
+                                Could not reach Kunfupay. Reload the app from your Kunfupay dashboard to refresh the session.
                               </p>
                             )}
 

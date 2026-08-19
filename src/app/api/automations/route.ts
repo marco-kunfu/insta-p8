@@ -1,23 +1,48 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { getSupabaseServerClient } from "@/lib/supabase-server"
+import { db } from "@/lib/db"
+import { Prisma, type Automation } from "@prisma/client"
+
+// Map a Prisma Automation record back to the raw DB row shape the frontend expects
+function serializeAutomation(a: Automation) {
+  return {
+    id: a.id,
+    user_id: Number(a.userId),
+    name: a.name,
+    trigger_type: a.triggerType,
+    trigger_value: a.triggerValue,
+    response_type: a.responseType,
+    response_content: a.responseContent,
+    media_selection: a.mediaSelection,
+    selected_reel_id: a.selectedReelId,
+    specific_media_id: a.specificMediaId,
+    trigger_source: a.triggerSource,
+    follow_up_steps: a.followUpSteps,
+    is_active: a.isActive,
+    created_at: a.createdAt,
+    updated_at: a.updatedAt,
+  }
+}
 
 export async function GET(request: NextRequest) {
   try {
     const userId = request.nextUrl.searchParams.get("userId")
     if (!userId) return NextResponse.json({ error: "Missing userId" }, { status: 400 })
 
-    const supabase = await getSupabaseServerClient()
+    let userIdBig: bigint
+    try {
+      userIdBig = BigInt(userId)
+    } catch {
+      return NextResponse.json({ error: "Missing userId" }, { status: 400 })
+    }
 
     // STABLE FIX: Fetch rules by the Login ID (userId) directly.
     // We stop caring about the shifting Business ID here.
-    const { data, error } = await supabase
-      .from("automations")
-      .select("*")
-      .eq("user_id", userId)
-      .order("created_at", { ascending: false })
+    const data = await db.automation.findMany({
+      where: { userId: userIdBig },
+      orderBy: { createdAt: "desc" },
+    })
 
-    if (error) throw error
-    return NextResponse.json(data)
+    return NextResponse.json(data.map(serializeAutomation))
   } catch (error) {
     console.error("[v0] Automations GET error:", error)
     return NextResponse.json({ error: "Failed to fetch" }, { status: 500 })
@@ -37,7 +62,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid trigger source" }, { status: 400 })
     }
 
-    const supabase = await getSupabaseServerClient()
+    let userIdBig: bigint
+    try {
+      userIdBig = BigInt(userId)
+    } catch {
+      return NextResponse.json({ error: "Missing fields" }, { status: 400 })
+    }
 
     // STABLE FIX: Always save to the Login ID
     const finalTriggerValue =
@@ -45,24 +75,21 @@ export async function POST(request: NextRequest) {
         ? `PAYLOAD_${Date.now()}_${Math.random().toString(36).substring(7)}`
         : trigger_value.toLowerCase()
 
-    const { data, error } = await supabase
-      .from("automations")
-      .insert({
-        user_id: userId,
+    const data = await db.automation.create({
+      data: {
+        userId: userIdBig,
         name,
-        trigger_source,
-        trigger_type: trigger_type || "keyword",
-        trigger_value: finalTriggerValue,
-        response_type: "pro",
-        response_content: content,
-        is_active: true,
-        specific_media_id: specific_media_id || null,
-      })
-      .select()
-      .single()
+        triggerSource: trigger_source,
+        triggerType: trigger_type || "keyword",
+        triggerValue: finalTriggerValue,
+        responseType: "pro",
+        responseContent: content,
+        isActive: true,
+        specificMediaId: specific_media_id || null,
+      },
+    })
 
-    if (error) throw error
-    return NextResponse.json(data)
+    return NextResponse.json(serializeAutomation(data))
   } catch (error) {
     console.error("[v0] Automations POST error:", error)
     return NextResponse.json({ error: "Failed to create" }, { status: 500 })
@@ -73,9 +100,7 @@ export async function DELETE(request: NextRequest) {
   try {
     const id = request.nextUrl.searchParams.get("id")
     if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 })
-    const supabase = await getSupabaseServerClient()
-    const { error } = await supabase.from("automations").delete().eq("id", id)
-    if (error) throw error
+    await db.automation.deleteMany({ where: { id } })
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error("[v0] Automations DELETE error:", error)
@@ -96,30 +121,25 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: "Invalid trigger source" }, { status: 400 })
     }
 
-    const supabase = await getSupabaseServerClient()
-
-    const updateData: any = {
+    const updateData: Prisma.AutomationUpdateInput = {
       name,
-      trigger_type: trigger_type || "keyword",
-      trigger_value: trigger_value.toLowerCase(),
-      response_content: content,
-      specific_media_id: specific_media_id || null,
+      triggerType: trigger_type || "keyword",
+      triggerValue: trigger_value.toLowerCase(),
+      responseContent: content,
+      specificMediaId: specific_media_id || null,
     }
 
     // Only update trigger_source if provided
     if (trigger_source) {
-      updateData.trigger_source = trigger_source
+      updateData.triggerSource = trigger_source
     }
 
-    const { data, error } = await supabase
-      .from("automations")
-      .update(updateData)
-      .eq("id", id)
-      .select()
-      .single()
+    const data = await db.automation.update({
+      where: { id },
+      data: updateData,
+    })
 
-    if (error) throw error
-    return NextResponse.json(data)
+    return NextResponse.json(serializeAutomation(data))
   } catch (error) {
     console.error("[v0] Automations PUT error:", error)
     return NextResponse.json({ error: "Failed to update" }, { status: 500 })
@@ -131,39 +151,40 @@ export async function PATCH(request: NextRequest) {
     const { id, is_active, action } = await request.json()
     if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 })
 
-    const supabase = await getSupabaseServerClient()
-
     if (action === "duplicate") {
-      const { data: original, error: fetchError } = await supabase
-        .from("automations")
-        .select("*")
-        .eq("id", id)
-        .single()
-      if (fetchError || !original) return NextResponse.json({ error: "Not found" }, { status: 404 })
+      const original = await db.automation.findUnique({ where: { id } })
+      if (!original) return NextResponse.json({ error: "Not found" }, { status: 404 })
 
-      const { id: _id, created_at, updated_at, ...rest } = original
-      const { data, error } = await supabase
-        .from("automations")
-        .insert({ ...rest, name: `${original.name} (copy)`, is_active: false })
-        .select()
-        .single()
-      if (error) throw error
-      return NextResponse.json(data)
+      const data = await db.automation.create({
+        data: {
+          userId: original.userId,
+          name: `${original.name} (copy)`,
+          triggerType: original.triggerType,
+          triggerValue: original.triggerValue,
+          responseType: original.responseType,
+          responseContent: (original.responseContent ?? undefined) as Prisma.InputJsonValue | undefined,
+          mediaSelection: (original.mediaSelection ?? undefined) as Prisma.InputJsonValue | undefined,
+          selectedReelId: original.selectedReelId,
+          specificMediaId: original.specificMediaId,
+          triggerSource: original.triggerSource,
+          followUpSteps: (original.followUpSteps ?? undefined) as Prisma.InputJsonValue | undefined,
+          isActive: false,
+        },
+      })
+
+      return NextResponse.json(serializeAutomation(data))
     }
 
     if (typeof is_active !== "boolean") {
       return NextResponse.json({ error: "Missing is_active" }, { status: 400 })
     }
 
-    const { data, error } = await supabase
-      .from("automations")
-      .update({ is_active })
-      .eq("id", id)
-      .select()
-      .single()
+    const data = await db.automation.update({
+      where: { id },
+      data: { isActive: is_active },
+    })
 
-    if (error) throw error
-    return NextResponse.json(data)
+    return NextResponse.json(serializeAutomation(data))
   } catch (error) {
     console.error("[v0] Automations PATCH error:", error)
     return NextResponse.json({ error: "Failed to update" }, { status: 500 })

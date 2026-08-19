@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { getSupabaseServerClient } from "@/lib/supabase-server"
+import { db } from "@/lib/db"
 
 export async function GET(request: NextRequest) {
   try {
@@ -8,23 +8,20 @@ export async function GET(request: NextRequest) {
 
     if (!userId) return NextResponse.json({ error: "Missing userId" }, { status: 400 })
 
-    const supabase = await getSupabaseServerClient()
-
     // 1. Get Access Token
-    const { data: user } = await supabase
-      .from("users")
-      .select("access_token") // Business ID ki zaroorat nahi hai ab
-      .eq("id", userId)
-      .single()
+    const user = await db.instagramAccount.findUnique({
+      where: { id: BigInt(userId) },
+      select: { accessToken: true }, // Business ID ki zaroorat nahi hai ab
+    })
 
-    if (!user?.access_token) {
+    if (!user?.accessToken) {
       return NextResponse.json({ error: "Instagram not connected" }, { status: 401 })
     }
 
     // 2. Fetch Media (Smart Method: /me/media)
     // Ye 'instagram.com' use karega jo aapke token ke saath compatible hai.
     // Hum '/me' use kar rahe hain taaki ID mismatch ka lafda hi na ho.
-    const url = `https://graph.instagram.com/me/media?fields=id,caption,media_type,media_url,thumbnail_url,permalink,timestamp&limit=24&access_token=${user.access_token}`
+    const url = `https://graph.instagram.com/me/media?fields=id,caption,media_type,media_url,thumbnail_url,permalink,timestamp&limit=24&access_token=${user.accessToken}`
 
     // The URL carries the user's Instagram access token as a query param, and
     // Vercel logs are readable by anyone with project access — redact it.

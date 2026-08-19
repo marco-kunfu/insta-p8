@@ -2,8 +2,7 @@
 
 import crypto from "crypto"
 import { type NextRequest, NextResponse } from "next/server"
-import { getSupabaseServerClient } from "@/lib/supabase-server"
-import { ensureSchema } from "@/lib/supabase-migrate"
+import { db } from "@/lib/db"
 import {
   sendTextDM,
   sendCardDM,
@@ -86,6 +85,60 @@ function keywordMatches(triggerValue: string, text: string): boolean {
         return text.includes(k.toLowerCase())
       }
     })
+}
+
+// ============================================================
+// Prisma row mappers — downstream logic passes snake_case row
+// objects around (matching the original table columns), so map
+// camelCase Prisma results back to those keys. `id` stays BigInt
+// for Prisma queries; business_account_id becomes a string so it
+// compares against Instagram's string ids and stores as a
+// message sender_id, matching what the old code serialized.
+// ============================================================
+function toUserRow(account: any) {
+  if (!account) return null
+  return {
+    id: account.id,
+    username: account.username,
+    access_token: account.accessToken,
+    business_account_id: account.businessAccountId != null ? account.businessAccountId.toString() : null,
+    page_id: account.pageId,
+    groq_auto_reply_enabled: account.groqAutoReplyEnabled,
+    ai_context: account.aiContext,
+    groq_api_key: account.groqApiKey,
+    ai_base_url: account.aiBaseUrl,
+    ai_model: account.aiModel,
+  }
+}
+
+function toAutomationRow(a: any) {
+  return {
+    id: a.id,
+    name: a.name,
+    trigger_type: a.triggerType,
+    trigger_value: a.triggerValue,
+    trigger_source: a.triggerSource,
+    specific_media_id: a.specificMediaId,
+    response_content: a.responseContent,
+  }
+}
+
+function toBigIntOrNull(value: string): bigint | null {
+  try {
+    return BigInt(value)
+  } catch {
+    return null
+  }
+}
+
+// Instagram ids arrive as strings; business_account_id is a BigInt column
+// while page_id is text, so only include the BigInt filter when the
+// candidate is numeric.
+function accountIdWhere(candidate: string) {
+  const asBigInt = toBigIntOrNull(candidate)
+  return asBigInt !== null
+    ? { OR: [{ businessAccountId: asBigInt }, { pageId: candidate }] }
+    : { pageId: candidate }
 }
 
 // ============================================================
@@ -174,7 +227,7 @@ async function verifyFollowStatus(igScopedId: string, pageAccessToken: string): 
   }
 }
 
-// Unlock-attempt counter is in lib/unlock-tracking.ts -- uses Supabase
+// Unlock-attempt counter is in lib/unlock-tracking.ts -- uses the
 // unlock_attempts table so the 3-attempt cap works across Vercel instances.
 
 export async function POST(request: NextRequest) {
@@ -199,9 +252,6 @@ export async function POST(request: NextRequest) {
     }
     const body = JSON.parse(rawBody)
     if (!body.entry) return NextResponse.json({ ok: true })
-    // Ensure schema is up-to-date on every cold start (idempotent, no-op if all tables exist)
-    ensureSchema().catch((e) => console.warn("[webhook] ensureSchema failed:", e?.message))
-    const supabase = await getSupabaseServerClient()
 
     for (const entry of body.entry) {
       // Skip pure system events (echo / read / delivery)
@@ -215,11 +265,7 @@ export async function POST(request: NextRequest) {
       const webhookId = entry.id
 
       // ---------- User resolution: direct, payload fallback, token verify ----------
-      let { data: user } = await supabase
-        .from("users")
-        .select("*")
-        .or(`business_account_id.eq.${webhookId},page_id.eq.${webhookId}`)
-        .single()
+      let user = toUserRow(await db.instagramAccount.findFirst({ where: accountIdWhere(webhookId) }))
 
       if (!user) {
         const candidateIds = new Set<string>()
@@ -235,13 +281,11 @@ export async function POST(request: NextRequest) {
         }
         for (const candidateId of candidateIds) {
           if (candidateId === webhookId) continue
-          const { data: fallbackUser } = await supabase
-            .from("users")
-            .select("*")
-            .or(`business_account_id.eq.${candidateId},page_id.eq.${candidateId}`)
-            .single()
+          const fallbackUser = toUserRow(
+            await db.instagramAccount.findFirst({ where: accountIdWhere(candidateId) }),
+          )
           if (fallbackUser) {
-            await supabase.from("users").update({ page_id: webhookId }).eq("id", fallbackUser.id)
+            await db.instagramAccount.update({ where: { id: fallbackUser.id }, data: { pageId: webhookId } })
             user = fallbackUser
             break
           }
@@ -249,15 +293,13 @@ export async function POST(request: NextRequest) {
       }
 
       if (!user) {
-        const { data: allUsers } = await supabase.from("users").select("*")
-        if (allUsers) {
-          for (const candidate of allUsers) {
-            if (!candidate.access_token) continue
-            if (await verifyIdOwnership(candidate.access_token, webhookId)) {
-              await supabase.from("users").update({ page_id: webhookId }).eq("id", candidate.id)
-              user = candidate
-              break
-            }
+        const allUsers = (await db.instagramAccount.findMany()).map((account) => toUserRow(account)!)
+        for (const candidate of allUsers) {
+          if (!candidate.access_token) continue
+          if (await verifyIdOwnership(candidate.access_token, webhookId)) {
+            await db.instagramAccount.update({ where: { id: candidate.id }, data: { pageId: webhookId } })
+            user = candidate
+            break
           }
         }
       }
@@ -267,13 +309,11 @@ export async function POST(request: NextRequest) {
         continue
       }
 
-      const { data: automations } = await supabase
-        .from("automations")
-        .select("*")
-        .eq("user_id", user.id)
-        .eq("is_active", true)
+      const automations = (
+        await db.automation.findMany({ where: { userId: user.id, isActive: true } })
+      ).map(toAutomationRow)
 
-      if (!automations?.length) continue
+      if (!automations.length) continue
 
       // ============================================================
       //  PART A: COMMENTS
@@ -530,46 +570,46 @@ export async function POST(request: NextRequest) {
           // ---------- Persist conversation + incoming message ----------
           let conv = null
           try {
-            const { data: existing } = await supabase
-              .from("conversations")
-              .select("id")
-              .eq("user_id", user.id)
-              .eq("recipient_id", senderId)
-              .single()
+            const existing = await db.conversation.findUnique({
+              where: { userId_recipientId: { userId: user.id, recipientId: senderId } },
+              select: { id: true },
+            })
 
             if (!existing) {
               let realUsername = `cnt_${senderId.slice(0, 5)}...`
               const profile = await fetchProfile(user.access_token, senderId)
               if (profile?.username) realUsername = profile.username
 
-              const { data: newConv } = await supabase
-                .from("conversations")
-                .insert({
-                  user_id: user.id,
-                  recipient_id: senderId,
-                  recipient_username: realUsername,
-                  last_message_at: new Date().toISOString(),
-                })
-                .select("id")
-                .single()
-              conv = newConv
+              conv = await db.conversation.upsert({
+                where: { userId_recipientId: { userId: user.id, recipientId: senderId } },
+                create: {
+                  userId: user.id,
+                  recipientId: senderId,
+                  recipientUsername: realUsername,
+                  lastMessageAt: new Date(),
+                },
+                update: { lastMessageAt: new Date() },
+                select: { id: true },
+              })
             } else {
               conv = existing
-              await supabase
-                .from("conversations")
-                .update({ last_message_at: new Date().toISOString() })
-                .eq("id", existing.id)
+              await db.conversation.update({
+                where: { id: existing.id },
+                data: { lastMessageAt: new Date() },
+              })
             }
 
             if (conv) {
-              await supabase.from("messages").insert({
-                id: event.message?.mid || `mid_${Date.now()}_${Math.random()}`,
-                conversation_id: conv.id,
-                user_id: user.id,
-                sender_id: senderId,
-                sender_username: "User",
-                content: triggerValue,
-                is_from_instagram: true,
+              await db.message.create({
+                data: {
+                  id: event.message?.mid || `mid_${Date.now()}_${Math.random()}`,
+                  conversationId: conv.id,
+                  userId: user.id,
+                  senderId: senderId,
+                  senderUsername: "User",
+                  content: triggerValue,
+                  isFromInstagram: true,
+                },
               })
             }
           } catch (err) {
@@ -588,12 +628,10 @@ export async function POST(request: NextRequest) {
                         match = automations.find((a) => a.id === ruleId)
                       } else if (triggerValue.startsWith("ICE_BREAKER_")) {
                         const iceBreakerId = triggerValue.replace("ICE_BREAKER_", "")
-                        const { data: ib } = await supabase
-                          .from("ice_breakers")
-                          .select("*")
-                          .eq("id", iceBreakerId)
-                          .eq("user_id", user.id)
-                          .single()
+                        // Payload-controlled id may not be a valid uuid — treat that as "no match"
+                        const ib = await db.iceBreaker
+                          .findFirst({ where: { id: iceBreakerId, userId: user.id } })
+                          .catch(() => null)
                         if (ib) {
                           match = { name: "Ice Breaker: " + ib.question, response_content: { message: ib.response } }
                         }
@@ -624,14 +662,16 @@ export async function POST(request: NextRequest) {
                           const result = await sendTextDM(user.access_token, { id: senderId }, aiReply)
                           if (result?.ok && conv) {
                             try {
-                              await supabase.from("messages").insert({
-                                id: `mid_ai_${Date.now()}_${Math.random()}`,
-                                conversation_id: conv.id,
-                                user_id: user.id,
-                                sender_id: user.business_account_id,
-                                sender_username: user.username,
-                                content: aiReply,
-                                is_from_instagram: false,
+                              await db.message.create({
+                                data: {
+                                  id: `mid_ai_${Date.now()}_${Math.random()}`,
+                                  conversationId: conv.id,
+                                  userId: user.id,
+                                  senderId: user.business_account_id,
+                                  senderUsername: user.username,
+                                  content: aiReply,
+                                  isFromInstagram: false,
+                                },
                               })
                             } catch (e) {
                               console.error("[webhook] Failed to save AI reply", e)
@@ -668,14 +708,16 @@ export async function POST(request: NextRequest) {
                           const result = await sendAutomationResponse(user.access_token, { id: senderId }, content)
                           if (result?.ok && conv) {
                             try {
-                              await supabase.from("messages").insert({
-                                id: `mid_reply_${Date.now()}_${Math.random()}`,
-                                conversation_id: conv.id,
-                                user_id: user.id,
-                                sender_id: user.business_account_id,
-                                sender_username: user.username,
-                                content: responsePreviewText(content),
-                                is_from_instagram: false,
+                              await db.message.create({
+                                data: {
+                                  id: `mid_reply_${Date.now()}_${Math.random()}`,
+                                  conversationId: conv.id,
+                                  userId: user.id,
+                                  senderId: user.business_account_id,
+                                  senderUsername: user.username,
+                                  content: responsePreviewText(content),
+                                  isFromInstagram: false,
+                                },
                               })
                             } catch (e) {
                               console.error("[webhook] Failed to save outgoing message", e)
@@ -687,14 +729,16 @@ export async function POST(request: NextRequest) {
                           const result = await sendCardDM(user.access_token, { id: senderId }, buildFollowGateCard({ username: user.username, ruleId: match.id, title: "❌ Not Following Yet!", subtitle: `We couldn't verify your follow. Please follow @${user.username} and click the button again.` }))
                           if (result?.ok && conv) {
                             try {
-                              await supabase.from("messages").insert({
-                                id: `mid_reply_${Date.now()}_${Math.random()}`,
-                                conversation_id: conv.id,
-                                user_id: user.id,
-                                sender_id: user.business_account_id,
-                                sender_username: user.username,
-                                content: "[Verification Failed]",
-                                is_from_instagram: false,
+                              await db.message.create({
+                                data: {
+                                  id: `mid_reply_${Date.now()}_${Math.random()}`,
+                                  conversationId: conv.id,
+                                  userId: user.id,
+                                  senderId: user.business_account_id,
+                                  senderUsername: user.username,
+                                  content: "[Verification Failed]",
+                                  isFromInstagram: false,
+                                },
                               })
                             } catch (e) {
                               console.error("[webhook] Failed to save outgoing message", e)
@@ -713,14 +757,16 @@ export async function POST(request: NextRequest) {
                                                     )
                                                     if (result?.ok && conv) {
                                                       try {
-                                                        await supabase.from("messages").insert({
-                                                          id: `mid_reply_${Date.now()}_${Math.random()}`,
-                                                          conversation_id: conv.id,
-                                                          user_id: user.id,
-                                                          sender_id: user.business_account_id,
-                                                          sender_username: user.username,
-                                                          content: "[Verification Unavailable — capped]",
-                                                          is_from_instagram: false,
+                                                        await db.message.create({
+                                                          data: {
+                                                            id: `mid_reply_${Date.now()}_${Math.random()}`,
+                                                            conversationId: conv.id,
+                                                            userId: user.id,
+                                                            senderId: user.business_account_id,
+                                                            senderUsername: user.username,
+                                                            content: "[Verification Unavailable — capped]",
+                                                            isFromInstagram: false,
+                                                          },
                                                         })
                                                       } catch (e) {
                                                         console.error("[webhook] Failed to save outgoing message", e)
@@ -731,14 +777,16 @@ export async function POST(request: NextRequest) {
                                                     const result = await sendCardDM(user.access_token, { id: senderId }, buildFollowGateCard({ username: user.username, ruleId: match.id, subtitle: `Please follow @${user.username} to see this!` }))
                                                     if (result?.ok && conv) {
                                                       try {
-                                                        await supabase.from("messages").insert({
-                                                          id: `mid_reply_${Date.now()}_${Math.random()}`,
-                                                          conversation_id: conv.id,
-                                                          user_id: user.id,
-                                                          sender_id: user.business_account_id,
-                                                          sender_username: user.username,
-                                                          content: `[Locked Content Gate — attempt ${attempts}/${UNLOCK_GATE_MAX_ATTEMPTS}]`,
-                                                          is_from_instagram: false,
+                                                        await db.message.create({
+                                                          data: {
+                                                            id: `mid_reply_${Date.now()}_${Math.random()}`,
+                                                            conversationId: conv.id,
+                                                            userId: user.id,
+                                                            senderId: user.business_account_id,
+                                                            senderUsername: user.username,
+                                                            content: `[Locked Content Gate — attempt ${attempts}/${UNLOCK_GATE_MAX_ATTEMPTS}]`,
+                                                            isFromInstagram: false,
+                                                          },
                                                         })
                                                       } catch (e) {
                                                         console.error("[webhook] Failed to save outgoing message", e)
@@ -756,14 +804,16 @@ export async function POST(request: NextRequest) {
                           const result = await sendAutomationResponse(user.access_token, { id: senderId }, content)
                           if (result?.ok && conv) {
                             try {
-                              await supabase.from("messages").insert({
-                                id: `mid_reply_${Date.now()}_${Math.random()}`,
-                                conversation_id: conv.id,
-                                user_id: user.id,
-                                sender_id: user.business_account_id,
-                                sender_username: user.username,
-                                content: responsePreviewText(content),
-                                is_from_instagram: false,
+                              await db.message.create({
+                                data: {
+                                  id: `mid_reply_${Date.now()}_${Math.random()}`,
+                                  conversationId: conv.id,
+                                  userId: user.id,
+                                  senderId: user.business_account_id,
+                                  senderUsername: user.username,
+                                  content: responsePreviewText(content),
+                                  isFromInstagram: false,
+                                },
                               })
                             } catch (e) {
                               console.error("[webhook] Failed to save outgoing message", e)
@@ -775,14 +825,16 @@ export async function POST(request: NextRequest) {
                           const result = await sendCardDM(user.access_token, { id: senderId }, buildFollowGateCard({ username: user.username, ruleId: match.id, subtitle: `Please follow @${user.username} to see this!` }))
                           if (result?.ok && conv) {
                             try {
-                              await supabase.from("messages").insert({
-                                id: `mid_reply_${Date.now()}_${Math.random()}`,
-                                conversation_id: conv.id,
-                                user_id: user.id,
-                                sender_id: user.business_account_id,
-                                sender_username: user.username,
-                                content: "[Locked Content Gate]",
-                                is_from_instagram: false,
+                              await db.message.create({
+                                data: {
+                                  id: `mid_reply_${Date.now()}_${Math.random()}`,
+                                  conversationId: conv.id,
+                                  userId: user.id,
+                                  senderId: user.business_account_id,
+                                  senderUsername: user.username,
+                                  content: "[Locked Content Gate]",
+                                  isFromInstagram: false,
+                                },
                               })
                             } catch (e) {
                               console.error("[webhook] Failed to save outgoing message", e)
@@ -798,14 +850,16 @@ export async function POST(request: NextRequest) {
                             const result = await sendCardDM(user.access_token, { id: senderId }, buildFollowGateCard({ username: user.username, ruleId: match.id, title: "❌ Verification Failed", subtitle: `We can't verify your follow status. Please follow @${user.username} and try again.` }))
                             if (result?.ok && conv) {
                               try {
-                                await supabase.from("messages").insert({
-                                  id: `mid_reply_${Date.now()}_${Math.random()}`,
-                                  conversation_id: conv.id,
-                                  user_id: user.id,
-                                  sender_id: user.business_account_id,
-                                  sender_username: user.username,
-                                  content: "[Auth Failure — Gate Sent]",
-                                  is_from_instagram: false,
+                                await db.message.create({
+                                  data: {
+                                    id: `mid_reply_${Date.now()}_${Math.random()}`,
+                                    conversationId: conv.id,
+                                    userId: user.id,
+                                    senderId: user.business_account_id,
+                                    senderUsername: user.username,
+                                    content: "[Auth Failure — Gate Sent]",
+                                    isFromInstagram: false,
+                                  },
                                 })
                               } catch (e) {
                                 console.error("[webhook] Failed to save outgoing message", e)
@@ -817,14 +871,16 @@ export async function POST(request: NextRequest) {
                             const result = await sendAutomationResponse(user.access_token, { id: senderId }, content)
                             if (result?.ok && conv) {
                               try {
-                                await supabase.from("messages").insert({
-                                  id: `mid_reply_${Date.now()}_${Math.random()}`,
-                                  conversation_id: conv.id,
-                                  user_id: user.id,
-                                  sender_id: user.business_account_id,
-                                  sender_username: user.username,
-                                  content: responsePreviewText(content),
-                                  is_from_instagram: false,
+                                await db.message.create({
+                                  data: {
+                                    id: `mid_reply_${Date.now()}_${Math.random()}`,
+                                    conversationId: conv.id,
+                                    userId: user.id,
+                                    senderId: user.business_account_id,
+                                    senderUsername: user.username,
+                                    content: responsePreviewText(content),
+                                    isFromInstagram: false,
+                                  },
                                 })
                               } catch (e) {
                                 console.error("[webhook] Failed to save outgoing message", e)
@@ -838,14 +894,16 @@ export async function POST(request: NextRequest) {
                       const result = await sendAutomationResponse(user.access_token, { id: senderId }, content)
                       if (result?.ok && conv) {
                         try {
-                          await supabase.from("messages").insert({
-                            id: `mid_reply_${Date.now()}_${Math.random()}`,
-                            conversation_id: conv.id,
-                            user_id: user.id,
-                            sender_id: user.business_account_id,
-                            sender_username: user.username,
-                            content: responsePreviewText(content),
-                            is_from_instagram: false,
+                          await db.message.create({
+                            data: {
+                              id: `mid_reply_${Date.now()}_${Math.random()}`,
+                              conversationId: conv.id,
+                              userId: user.id,
+                              senderId: user.business_account_id,
+                              senderUsername: user.username,
+                              content: responsePreviewText(content),
+                              isFromInstagram: false,
+                            },
                           })
                         } catch (e) {
                           console.error("[webhook] Failed to save outgoing message", e)

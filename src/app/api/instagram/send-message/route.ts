@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { getSupabaseServerClient } from "@/lib/supabase-server"
+import { db } from "@/lib/db"
 
 /**
  * POST /api/instagram/send-message
@@ -20,24 +20,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Missing required fields: user_id, recipient_id, message" }, { status: 400 })
     }
 
-    const supabase = await getSupabaseServerClient()
-
     // Get user's access token
-    const { data: user, error: userError } = await supabase
-      .from("users")
-      .select("access_token, username")
-      .eq("id", user_id)
-      .single()
+    const user = await db.instagramAccount.findUnique({
+      where: { id: BigInt(user_id) },
+      select: { accessToken: true, username: true },
+    })
 
-    if (userError || !user) {
-      console.error("[v0] Failed to get user:", userError)
+    if (!user) {
+      console.error("[v0] Failed to get user:", user_id)
       return NextResponse.json({ error: "User not found" }, { status: 404 })
     }
 
     console.log("[v0] Sending DM from", user.username, "to", recipient_id)
 
     // Send message via Instagram API
-    const sendUrl = `https://graph.instagram.com/v24.0/me/messages?access_token=${encodeURIComponent(user.access_token)}`
+    const sendUrl = `https://graph.instagram.com/v24.0/me/messages?access_token=${encodeURIComponent(user.accessToken)}`
 
     const response = await fetch(sendUrl, {
       method: "POST",
@@ -64,23 +61,32 @@ export async function POST(request: NextRequest) {
     console.log("[v0] Message sent successfully:", data.message_id)
 
     // Store the sent message in database
-    const { data: conversation } = await supabase
-      .from("conversations")
-      .select("id")
-      .eq("user_id", user_id)
-      .eq("recipient_id", recipient_id)
-      .single()
+    const conversation = await db.conversation.findUnique({
+      where: {
+        userId_recipientId: {
+          userId: BigInt(user_id),
+          recipientId: recipient_id.toString(),
+        },
+      },
+      select: { id: true },
+    })
 
     if (conversation) {
-      await supabase.from("messages").insert({
-        id: data.message_id,
-        conversation_id: conversation.id,
-        user_id,
-        sender_id: user_id,
-        sender_username: user.username,
-        content: message,
-        is_from_instagram: false,
-      })
+      // The DM already went out — a storage failure must not turn the
+      // response into an error (matches the old fire-and-forget insert).
+      await db.message
+        .create({
+          data: {
+            id: data.message_id,
+            conversationId: conversation.id,
+            userId: BigInt(user_id),
+            senderId: user_id.toString(),
+            senderUsername: user.username,
+            content: message,
+            isFromInstagram: false,
+          },
+        })
+        .catch((e) => console.error("[v0] Failed to store sent message:", e))
     }
 
     return NextResponse.json({

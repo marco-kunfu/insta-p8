@@ -17,7 +17,7 @@ export default function Home() {
     if (code || savedId) {
       // If code exists, Redirect to dashboard to handle the handshake (via the new hook)
       // If local session exists, also redirect
-      router.replace("/dashboard?code=" + (code || ""))
+      router.replace("/embed?code=" + (code || ""))
     }
   }, [searchParams, router])
 

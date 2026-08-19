@@ -1,4 +1,4 @@
-import { getSupabaseAdmin } from "./supabase-admin"
+import { db } from "./db"
 
 /**
  * Persistent unlock-attempt counter, shared across serverless instances.
@@ -13,13 +13,11 @@ import { getSupabaseAdmin } from "./supabase-admin"
  * Stale entries are auto-expired by a scheduled pg_cron job (hourly DELETE
  * WHERE updated_at < NOW() - INTERVAL '24 hours'). See schema.sql.
  *
- * The increment is done via the `bump_unlock_attempt(p_key)` RPC defined
- * in schema.sql. Atomic INSERT ... ON CONFLICT DO UPDATE guarantees no
- * concurrent invocations can lose a count.
+ * The increment is done with a raw atomic INSERT ... ON CONFLICT DO UPDATE
+ * so no concurrent invocations can lose a count.
  */
 
 const UNLOCK_TTL_MS = 24 * 60 * 60 * 1000
-const supabaseLazy = () => getSupabaseAdmin()
 
 export function unlockKey(senderId: string, ruleId: string): string {
   return `${senderId}::${ruleId}`
@@ -27,36 +25,31 @@ export function unlockKey(senderId: string, ruleId: string): string {
 
 async function deleteAttempt(key: string): Promise<void> {
   try {
-    await supabaseLazy().from("unlock_attempts").delete().eq("key", key)
+    await db.unlockAttempt.deleteMany({ where: { key } })
   } catch {
     // Swallow
   }
 }
 
 /**
- * Increment the attempt counter for a (sender, rule) pair via the
- * `bump_unlock_attempt` Postgres RPC. Atomic and race-free.
+ * Increment the attempt counter for a (sender, rule) pair via an atomic
+ * INSERT ... ON CONFLICT DO UPDATE upsert. Atomic and race-free.
  *
- * Returns the new count. If the RPC fails for any reason (table missing,
+ * Returns the new count. If the query fails for any reason (table missing,
  * network error, etc.), falls back to 1 so the user still gets their
  * first gate card rather than being silently blocked.
  */
 export async function bumpUnlockAttempt(key: string): Promise<number> {
   try {
-    const { data, error } = await supabaseLazy().rpc("bump_unlock_attempt", {
-      p_key: key,
-    } as any)
-    if (error) {
-      console.warn(`[unlock-tracking] bump_unlock_attempt RPC failed for key=${key}: ${error.message}`)
+    const rows = await db.$queryRaw<{ count: number }[]>`INSERT INTO public.unlock_attempts (key, count, updated_at) VALUES (${key}, 1, NOW()) ON CONFLICT (key) DO UPDATE SET count = public.unlock_attempts.count + 1, updated_at = NOW() RETURNING count`
+    const count = rows[0]?.count
+    if (typeof count !== "number") {
+      console.warn(`[unlock-tracking] bump upsert returned non-number for key=${key}: ${JSON.stringify(rows)}`)
       return 1
     }
-    if (typeof data !== "number") {
-      console.warn(`[unlock-tracking] bump_unlock_attempt returned non-number for key=${key}: ${JSON.stringify(data)}`)
-      return 1
-    }
-    return data
+    return count
   } catch (e) {
-    console.warn(`[unlock-tracking] bump_unlock_attempt threw for key=${key}:`, e instanceof Error ? e.message : e)
+    console.warn(`[unlock-tracking] bump upsert threw for key=${key}:`, e instanceof Error ? e.message : e)
     return 1
   }
 }

@@ -1,0 +1,254 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ============================================================
+// Kunfupay integration layer (template)
+// ============================================================
+
+// Vendors who installed the app — id IS the kunfupay user ID
+model Vendor {
+  id            String    @id @map("kunfupay_user_id")
+  installedAt   DateTime  @default(now()) @map("installed_at")
+  uninstalledAt DateTime? @map("uninstalled_at")
+  isActive      Boolean   @default(true) @map("is_active")
+
+  instagramAccounts InstagramAccount[]
+
+  @@map("vendors")
+}
+
+// Kunfupay webhook deliveries are at-least-once: the unique webhookId is the
+// dedupe barrier the integrations guide requires. Rows are an audit log of
+// received events; no FK on purpose (the vendor may not exist yet).
+model KunfupayWebhookEvent {
+  webhookId  String   @id @map("webhook_id")
+  event      String
+  userId     String?  @map("kunfupay_user_id")
+  payload    Json?
+  receivedAt DateTime @default(now()) @map("received_at")
+
+  @@index([event, receivedAt], map: "idx_kunfupay_webhook_events_event")
+  @@map("kunfupay_webhook_events")
+}
+
+// ============================================================
+// App layer — Instagram DM automation
+// The `users` table predates the Kunfupay migration: a row is a
+// connected Instagram Business account (id = Instagram user id),
+// not an auth user. vendorId is nullable so rows created before
+// the migration keep working until they are claimed by a vendor.
+// ============================================================
+
+model InstagramAccount {
+  id                   BigInt    @id
+  vendorId             String?   @map("vendor_id")
+  vendor               Vendor?   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  username             String    @unique
+  accessToken          String    @map("access_token")
+  tokenExpiresAt       DateTime? @map("token_expires_at")
+  businessAccountId    BigInt?   @map("business_account_id")
+  pageId               String?   @map("page_id")
+  groqAutoReplyEnabled Boolean?  @default(false) @map("groq_auto_reply_enabled")
+  aiContext            String?   @map("ai_context")
+  // Per-account AI overrides. NULL on purpose: lib/ai-reply.ts falls back to
+  // GROQ_API_KEY / AI_BASE_URL / AI_MODEL from the environment when empty.
+  groqApiKey           String?   @map("groq_api_key")
+  aiBaseUrl            String?   @map("ai_base_url")
+  aiModel              String?   @map("ai_model")
+  createdAt            DateTime? @default(now()) @map("created_at")
+  updatedAt            DateTime? @default(now()) @updatedAt @map("updated_at")
+
+  conversations   Conversation[]
+  messages        Message[]
+  automations     Automation[]
+  mediaCache      MediaCache[]
+  iceBreakers     IceBreaker[]
+  contentPool     ContentPoolItem[]
+  schedulerConfig SchedulerConfig?
+  reelsPosts      ReelsPost[]
+
+  @@index([vendorId])
+  @@map("users")
+}
+
+model Conversation {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId            BigInt    @map("user_id")
+  account           InstagramAccount @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipientId       String    @map("recipient_id")
+  recipientUsername String    @map("recipient_username")
+  lastMessageAt     DateTime? @default(now()) @map("last_message_at")
+  createdAt         DateTime? @default(now()) @map("created_at")
+  updatedAt         DateTime? @default(now()) @updatedAt @map("updated_at")
+
+  messages Message[]
+
+  @@unique([userId, recipientId])
+  @@map("conversations")
+}
+
+model Message {
+  id              String       @id
+  conversationId  String       @map("conversation_id") @db.Uuid
+  conversation    Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  userId          BigInt       @map("user_id")
+  account         InstagramAccount @relation(fields: [userId], references: [id], onDelete: Cascade)
+  senderId        String       @map("sender_id")
+  senderUsername  String       @map("sender_username")
+  content         String
+  isFromInstagram Boolean?     @default(true) @map("is_from_instagram")
+  createdAt       DateTime?    @default(now()) @map("created_at")
+
+  @@map("messages")
+}
+
+model WebhookEvent {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  eventType   String    @map("event_type")
+  userId      BigInt?   @map("user_id")
+  data        Json?
+  processedAt DateTime? @default(now()) @map("processed_at")
+
+  @@map("webhook_events")
+}
+
+model Automation {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId          BigInt    @map("user_id")
+  account         InstagramAccount @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name            String
+  triggerType     String    @map("trigger_type")
+  triggerValue    String    @map("trigger_value")
+  responseType    String?   @default("text") @map("response_type")
+  responseContent Json?     @map("response_content")
+  mediaSelection  Json?     @map("media_selection")
+  selectedReelId  String?   @map("selected_reel_id")
+  specificMediaId String?   @map("specific_media_id")
+  triggerSource   String    @default("comment") @map("trigger_source")
+  followUpSteps   Json?     @map("follow_up_steps")
+  isActive        Boolean?  @default(true) @map("is_active")
+  createdAt       DateTime? @default(now()) @map("created_at")
+  updatedAt       DateTime? @default(now()) @updatedAt @map("updated_at")
+
+  @@index([triggerSource], map: "idx_automations_trigger_source")
+  @@index([userId, triggerSource], map: "idx_automations_user_source")
+  @@map("automations")
+}
+
+model MediaCache {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId           BigInt    @map("user_id")
+  account          InstagramAccount @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mediaId          String    @map("media_id")
+  mediaType        String    @map("media_type")
+  caption          String?
+  imageUrl         String?   @map("image_url")
+  videoUrl         String?   @map("video_url")
+  permalink        String?
+  mediaProductType String?   @map("media_product_type")
+  timestamp        DateTime?
+  cachedAt         DateTime? @default(now()) @map("cached_at")
+
+  @@unique([userId, mediaId])
+  @@map("media_cache")
+}
+
+model IceBreaker {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    BigInt    @map("user_id")
+  account   InstagramAccount @relation(fields: [userId], references: [id], onDelete: Cascade)
+  question  String
+  response  String
+  isActive  Boolean?  @default(true) @map("is_active")
+  createdAt DateTime? @default(now()) @map("created_at")
+
+  @@map("ice_breakers")
+}
+
+model ContentPoolItem {
+  id                 String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId             BigInt    @map("user_id")
+  account            InstagramAccount @relation(fields: [userId], references: [id], onDelete: Cascade)
+  videoUrl           String    @map("video_url")
+  caption            String?
+  coverUrl           String?   @map("cover_url")
+  sequenceIndex      Int       @default(autoincrement()) @map("sequence_index")
+  thumbnailUrl       String?   @map("thumbnail_url")
+  isActive           Boolean?  @default(true) @map("is_active")
+  createdAt          DateTime? @default(now()) @map("created_at")
+  automationTemplate Json?     @map("automation_template")
+
+  reelsPosts ReelsPost[]
+
+  @@index([userId, sequenceIndex], map: "idx_content_pool_user_sequence")
+  @@map("content_pool")
+}
+
+model SchedulerConfig {
+  userId               BigInt    @id @map("user_id")
+  account              InstagramAccount @relation(fields: [userId], references: [id], onDelete: Cascade)
+  intervalMinutes      Int       @default(240) @map("interval_minutes")
+  startTime            DateTime? @default(dbgenerated("'09:00:00'::time without time zone")) @map("start_time") @db.Time(6)
+  endTime              DateTime? @default(dbgenerated("'21:00:00'::time without time zone")) @map("end_time") @db.Time(6)
+  lastRunAt            DateTime? @map("last_run_at")
+  nextRunAt            DateTime? @default(now()) @map("next_run_at")
+  currentSequenceIndex Int?      @default(1) @map("current_sequence_index")
+  isRunning            Boolean?  @default(false) @map("is_running")
+  createdAt            DateTime? @default(now()) @map("created_at")
+  updatedAt            DateTime? @default(now()) @updatedAt @map("updated_at")
+
+  @@index([nextRunAt], map: "idx_scheduler_next_run")
+  @@map("scheduler_config")
+}
+
+model ReelsPost {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId        BigInt    @map("user_id")
+  account       InstagramAccount @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contentPoolId String?   @map("content_pool_id") @db.Uuid
+  contentPool   ContentPoolItem? @relation(fields: [contentPoolId], references: [id], onDelete: SetNull)
+  videoUrl      String    @map("video_url")
+  caption       String?
+  igContainerId String?   @map("ig_container_id")
+  igMediaId     String?   @map("ig_media_id")
+  status        String?   @default("PENDING")
+  errorMessage  String?   @map("error_message")
+  publishedAt   DateTime? @map("published_at")
+  createdAt     DateTime? @default(now()) @map("created_at")
+
+  @@index([userId, status], map: "idx_reels_posts_user_status")
+  @@map("reels_posts")
+}
+
+// No FK on purpose: rows outlive account disconnects (worker drains the queue).
+model DmQueue {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId      String    @map("user_id")
+  recipientId String    @map("recipient_id")
+  accessToken String    @map("access_token")
+  message     String
+  sendAt      DateTime  @map("send_at")
+  status      String    @default("pending")
+  attempts    Int       @default(0)
+  createdAt   DateTime? @default(now()) @map("created_at")
+
+  @@map("dm_queue")
+}
+
+// Persistent counter so the 3-attempt gate cap survives serverless instances.
+// Incremented atomically via raw SQL upsert (see lib/unlock-tracking.ts).
+model UnlockAttempt {
+  key       String   @id
+  count     Int      @default(0)
+  updatedAt DateTime @default(now()) @map("updated_at")
+
+  @@index([updatedAt], map: "idx_unlock_attempts_updated")
+  @@map("unlock_attempts")
+}

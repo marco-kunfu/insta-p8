@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { getSupabaseServerClient } from "@/lib/supabase-server"
+import { db } from "@/lib/db"
 import { diagnoseAIReply } from "@/lib/ai-reply"
 
 // Runs one real completion with the account's stored settings and reports the
@@ -9,13 +9,13 @@ export async function POST(request: NextRequest) {
   const { userId, probe } = await request.json().catch(() => ({ userId: null, probe: undefined }))
   if (!userId) return NextResponse.json({ error: "userId required" }, { status: 400 })
 
-  const supabase = await getSupabaseServerClient()
-  const { data } = await supabase
-    .from("users")
-    .select("groq_api_key, ai_base_url, ai_model, ai_context")
-    .eq("id", userId)
-    .single()
+  const data = await db.instagramAccount
+    .findUnique({
+      where: { id: BigInt(userId) },
+      select: { groqApiKey: true, aiBaseUrl: true, aiModel: true, aiContext: true },
+    })
+    .catch(() => null)
 
-  const result = await diagnoseAIReply(data?.groq_api_key, data?.ai_base_url, data?.ai_model, data?.ai_context, probe)
+  const result = await diagnoseAIReply(data?.groqApiKey, data?.aiBaseUrl, data?.aiModel, data?.aiContext, probe)
   return NextResponse.json(result, { status: result.ok ? 200 : 502 })
 }

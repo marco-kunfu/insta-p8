@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { getSupabaseServerClient } from "@/lib/supabase-server"
+import { db } from "@/lib/db"
 
 /**
  * POST /api/instagram/test-login
@@ -15,27 +15,19 @@ export async function POST(request: NextRequest) {
     const TEST_USER_ID = "9999999999"
     const TEST_USERNAME = "test_creator"
 
-    const supabase = await getSupabaseServerClient()
-
-    const { error: upsertError } = await supabase
-      .from("users")
-      .upsert(
-        {
-          id: TEST_USER_ID,
-          username: TEST_USERNAME,
-          access_token: "TEST_TOKEN_NOT_REAL",
-          token_expires_at: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(),
-          business_account_id: TEST_USER_ID,
-          page_id: TEST_USER_ID,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: "id" }
-      )
-
-    if (upsertError) {
-      console.error("[test-login] Supabase upsert error:", upsertError)
-      return NextResponse.json({ error: upsertError.message }, { status: 500 })
+    const testUser = {
+      username: TEST_USERNAME,
+      accessToken: "TEST_TOKEN_NOT_REAL",
+      tokenExpiresAt: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000),
+      businessAccountId: BigInt(TEST_USER_ID),
+      pageId: TEST_USER_ID,
     }
+
+    await db.instagramAccount.upsert({
+      where: { id: BigInt(TEST_USER_ID) },
+      create: { id: BigInt(TEST_USER_ID), ...testUser },
+      update: testUser,
+    })
 
     const response = NextResponse.json({
       success: true,

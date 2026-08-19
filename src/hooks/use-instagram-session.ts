@@ -19,9 +19,12 @@ export function useInstagramSession() {
             // CASE A: New Login from Instagram
             if (code) {
                 try {
+                    // Link the connected Instagram account to the Kunfupay vendor
+                    // resolved by the embed handshake (KunfupayEmbedProvider).
+                    const vendorId = window.sessionStorage.getItem("kunfupay_vendor_id")
                     const res = await fetch("/api/instagram/callback", {
                         method: "POST",
-                        body: JSON.stringify({ code }),
+                        body: JSON.stringify({ code, vendorId }),
                     })
                     const data = await res.json()
 
@@ -34,7 +37,7 @@ export function useInstagramSession() {
                         setUsername(data.username)
                         setProfilePic(data.profilePic || null)
                         // Remove code from URL
-                        router.replace("/dashboard")
+                        router.replace("/embed")
                     }
                 } catch (err) {
                     console.error("Login failed:", err)

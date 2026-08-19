@@ -18,11 +18,11 @@ import { BRAND } from "@/lib/brand"
 const SHOW_PLACEHOLDER_PAGES = false
 
 const NAV = [
-  { href: "/dashboard", icon: LayoutDashboard, label: "Overview" },
-  { href: "/dashboard/automations", icon: Zap, label: "Automations" },
-  { href: "/dashboard/inbox", icon: MessageSquare, label: "Inbox" },
-  { href: "/dashboard/ice-breakers", icon: Snowflake, label: "Ice breakers" },
-  { href: "/dashboard/analytics", icon: BarChart3, label: "Analytics", placeholder: true },
+  { href: "/embed", icon: LayoutDashboard, label: "Overview" },
+  { href: "/embed/automations", icon: Zap, label: "Automations" },
+  { href: "/embed/inbox", icon: MessageSquare, label: "Inbox" },
+  { href: "/embed/ice-breakers", icon: Snowflake, label: "Ice breakers" },
+  { href: "/embed/analytics", icon: BarChart3, label: "Analytics", placeholder: true },
 ]
 
 const VISIBLE_NAV = NAV.filter((item) => SHOW_PLACEHOLDER_PAGES || !item.placeholder)

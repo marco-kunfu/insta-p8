@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { getSupabaseServerClient } from "@/lib/supabase-server"
+import { db } from "@/lib/db"
 
 export async function POST(request: NextRequest) {
     try {
@@ -10,16 +10,13 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
         }
 
-        const supabase = await getSupabaseServerClient()
-
         // 1. Get User Access Token
-        const { data: user, error: userError } = await supabase
-            .from("users")
-            .select("access_token, username, business_account_id")
-            .eq("id", userId)
-            .single()
+        const user = await db.instagramAccount.findUnique({
+            where: { id: BigInt(userId) },
+            select: { accessToken: true, username: true, businessAccountId: true }
+        })
 
-        if (userError || !user) {
+        if (!user) {
             return NextResponse.json({ error: "User not found" }, { status: 404 })
         }
 
@@ -34,7 +31,7 @@ export async function POST(request: NextRequest) {
 
         // 3. Send to Instagram
         const res = await fetch(
-            `https://graph.instagram.com/v24.0/me/messages?access_token=${user.access_token}`,
+            `https://graph.instagram.com/v24.0/me/messages?access_token=${user.accessToken}`,
             {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -51,32 +48,37 @@ export async function POST(request: NextRequest) {
 
         // 4. Log to Database (Outbound Message)
         // Find Conversation ID first
-        let { data: conv } = await supabase
-            .from("conversations")
-            .select("id")
-            .eq("user_id", userId)
-            .eq("recipient_id", recipientId)
-            .single()
+        const conv = await db.conversation.findUnique({
+            where: {
+                userId_recipientId: {
+                    userId: BigInt(userId),
+                    recipientId: String(recipientId)
+                }
+            },
+            select: { id: true }
+        })
 
-        // If conversation doesn't exist (unlikely if replying, but possible if initiating), create it logic is tricky here 
+        // If conversation doesn't exist (unlikely if replying, but possible if initiating), create it logic is tricky here
         // without knowing username. Assuming it exists for now as this is usually a reply flow.
 
         if (conv) {
-            await supabase.from("messages").insert({
-                id: `mid_out_${Date.now()}_${Math.random()}`,
-                conversation_id: conv.id,
-                user_id: userId,
-                sender_id: user.business_account_id,
-                sender_username: user.username,
-                content: message || "[Attachment]",
-                is_from_instagram: false
+            await db.message.create({
+                data: {
+                    id: `mid_out_${Date.now()}_${Math.random()}`,
+                    conversationId: conv.id,
+                    userId: BigInt(userId),
+                    senderId: user.businessAccountId?.toString() ?? "",
+                    senderUsername: user.username,
+                    content: message || "[Attachment]",
+                    isFromInstagram: false
+                }
             })
 
             // Update conversation timestamp
-            await supabase
-                .from("conversations")
-                .update({ last_message_at: new Date().toISOString() })
-                .eq("id", conv.id)
+            await db.conversation.update({
+                where: { id: conv.id },
+                data: { lastMessageAt: new Date() }
+            })
         }
 
         return NextResponse.json({ success: true, data })

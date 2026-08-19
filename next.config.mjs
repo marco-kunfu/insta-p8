@@ -1,5 +1,8 @@
 import { dirname } from "node:path"
 import { fileURLToPath } from "node:url"
+import createNextIntlPlugin from "next-intl/plugin"
+
+const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts")
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -7,8 +10,7 @@ const nextConfig = {
   // find, and a stray package-lock.json in the user's home directory makes it
   // pick $HOME. The `@/…` aliases then resolve against the wrong base and
   // every import fails with "file not found". Pinning the root removes the
-  // guesswork — this repo also ships three lockfiles of its own, which feeds
-  // the same inference.
+  // guesswork.
   turbopack: {
     root: dirname(fileURLToPath(import.meta.url)),
   },
@@ -18,15 +20,6 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  // schema.sql is read at runtime by lib/supabase-migrate.ts. Without this
-  // entry, the serverless bundle for the Vercel function that imports
-  // ensureSchema() will not include schema.sql, and the migration runner
-  // will log "schema.sql not found" on every cold start.
-  // Vercel bundles follow the application root by default; we extend
-  // `outputFileTracingIncludes` so the file explicitly survives the trace.
-  outputFileTracingIncludes: {
-    "**/*": ["./schema.sql"],
-  },
 }
 
-export default nextConfig
+export default withNextIntl(nextConfig)
