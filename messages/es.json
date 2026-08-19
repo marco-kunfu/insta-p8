@@ -1,0 +1,35 @@
+{
+  "metadata": {
+    "title": "Kunfu DM",
+    "description": "Convierte comentarios, DMs y respuestas a stories en conversaciones que venden — con tus productos de Kunfupay a un toque."
+  },
+  "common": {
+    "loading": "Cargando...",
+    "save": "Guardar",
+    "saving": "Guardando...",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "deleting": "Eliminando...",
+    "edit": "Editar",
+    "close": "Cerrar"
+  },
+  "home": {
+    "title": "Kunfu DM",
+    "description": "Esta app está diseñada para ejecutarse embebida dentro de Kunfupay.",
+    "accessVia": "Accede mediante"
+  },
+  "embed": {
+    "authError": "Error de autenticación",
+    "loadError": "Error al cargar datos",
+    "title": "KunfuApp Template",
+    "vendor": "Vendedor",
+    "loadingData": "Cargando datos...",
+    "appContent": "Contenido de tu App",
+    "appContentDescription": "Reemplaza esto con la UI de tu app. El handshake con Kunfupay se ha completado.",
+    "nextSteps": "Siguientes pasos",
+    "step1": "Añade tus modelos de Prisma en prisma/schema.prisma",
+    "step2": "Crea tus rutas API en src/app/api/",
+    "step3": "Construye la UI de tu embed en esta página",
+    "step4": "Ejecuta npm run db:push para sincronizar tu schema"
+  }
+}
