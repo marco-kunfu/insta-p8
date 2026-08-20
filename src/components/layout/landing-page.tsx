@@ -1,24 +1,24 @@
 "use client"
 
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import {
   Zap, MessageCircle, Sparkles, ArrowUpRight,
   Send, AtSign, Brain, Inbox, Lock, Terminal, ShoppingBag,
 } from "lucide-react"
 import { BRAND } from "@/lib/brand"
+import { safeLocal } from "@/lib/safe-storage"
+import { startInstagramLogin, standaloneUrl } from "@/lib/instagram-login"
 
 export function LandingPage() {
   const router = useRouter()
+  const [popupBlocked, setPopupBlocked] = useState(false)
 
-  const handleLogin = () => {
-    // Instagram Business Login (Instagram API with Instagram Login). client_id must be the
-    // Instagram app ID from the Instagram product page, not the parent Meta app ID.
-    window.location.href = `https://www.instagram.com/oauth/authorize?enable_fb_login=0&force_authentication=1&client_id=${process.env.NEXT_PUBLIC_INSTAGRAM_APP_ID}&redirect_uri=${process.env.NEXT_PUBLIC_INSTAGRAM_REDIRECT_URI}&response_type=code&scope=instagram_business_basic%2Cinstagram_business_manage_messages%2Cinstagram_business_manage_comments`
-  }
+  const handleLogin = () => setPopupBlocked(startInstagramLogin())
 
   const handleTestLogin = () => {
-    localStorage.setItem("ig_user_id", "9999999999")
-    localStorage.setItem("ig_username", "test_creator")
+    safeLocal.setItem("ig_user_id", "9999999999")
+    safeLocal.setItem("ig_username", "test_creator")
     router.push("/embed")
   }
 
@@ -34,6 +34,20 @@ export function LandingPage() {
       {/* Morfeo puts atmosphere in the upper corners instead of film grain, which
           only reads as texture on a near-black surface. */}
       <div className="morfeo-atmosphere pointer-events-none fixed inset-0 z-0" />
+
+      {popupBlocked && (
+        <div className="relative z-50 border-b border-primary/30 bg-primary-soft px-5 py-4 md:px-10">
+          <p className="text-sm font-medium text-foreground">
+            Instagram no permite iniciar sesión dentro del panel de Kunfupay.
+          </p>
+          <p className="mt-1 text-[13px] text-muted-foreground">
+            Abre la app en una pestaña nueva para conectar tu cuenta:{" "}
+            <span className="font-mono-ui select-all break-all text-foreground">
+              {standaloneUrl()}
+            </span>
+          </p>
+        </div>
+      )}
 
       {/* Nav — Morfeo header height: 56px mobile, 64px desktop */}
       <nav className="relative z-50 flex items-center justify-between px-5 md:px-10 min-h-14 md:min-h-16 border-b border-border">

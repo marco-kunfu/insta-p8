@@ -1,20 +1,27 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 
+// Instagram redirects here after Business Login. Land on /embed rather than
+// the landing page: this can run in a popup opened from the Kunfupay iframe,
+// and `state` carries the vendorId across that top-level hop (sessionStorage
+// does not survive it).
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams
   const code = searchParams.get("code")
   const error = searchParams.get("error")
+  const state = searchParams.get("state")
 
   if (error) {
-    const redirectUrl = new URL("/", request.url)
+    const redirectUrl = new URL("/embed", request.url)
     redirectUrl.searchParams.set("error", error)
+    if (state) redirectUrl.searchParams.set("state", state)
     return NextResponse.redirect(redirectUrl)
   }
 
   if (code) {
-    const redirectUrl = new URL("/", request.url)
+    const redirectUrl = new URL("/embed", request.url)
     redirectUrl.searchParams.set("code", code)
+    if (state) redirectUrl.searchParams.set("state", state)
     return NextResponse.redirect(redirectUrl)
   }
 

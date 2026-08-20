@@ -28,7 +28,12 @@ export default function DashboardPage() {
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
-        if (!userId) return
+        // No connected Instagram account yet: there are no stats to fetch, and
+        // leaving `loading` set would spin forever instead of prompting.
+        if (!userId) {
+            if (!isSessionLoading) setLoading(false)
+            return
+        }
 
         const fetchStats = async () => {
             try {
@@ -45,7 +50,7 @@ export default function DashboardPage() {
         }
 
         fetchStats()
-    }, [userId])
+    }, [userId, isSessionLoading])
 
     if (isSessionLoading || loading) {
         return (
@@ -54,6 +59,7 @@ export default function DashboardPage() {
             </div>
         )
     }
+
 
     return (
         <div className="p-8 space-y-8 animate-in fade-in duration-700">
