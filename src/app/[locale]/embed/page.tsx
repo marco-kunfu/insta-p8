@@ -60,28 +60,6 @@ export default function DashboardPage() {
         )
     }
 
-    if (!userId) {
-        return (
-            <div className="flex min-h-[50vh] flex-col items-center justify-center gap-3 p-8 text-center">
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary-soft text-primary">
-                    <Zap className="h-5 w-5" />
-                </div>
-                <h1 className="font-serif-display text-2xl text-foreground">
-                    Connect your Instagram account
-                </h1>
-                <p className="max-w-sm text-[13px] text-muted-foreground">
-                    Link a business account to start automating DMs. Instagram login opens in
-                    its own tab, since it cannot run inside the Kunfupay dashboard.
-                </p>
-                <Link
-                    href="/"
-                    className="mt-1 rounded-full bg-primary px-5 py-2 text-xs font-bold text-primary-foreground transition-colors hover:bg-primary/90"
-                >
-                    Connect Instagram
-                </Link>
-            </div>
-        )
-    }
 
     return (
         <div className="p-8 space-y-8 animate-in fade-in duration-700">

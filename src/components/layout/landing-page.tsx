@@ -7,48 +7,14 @@ import {
   Send, AtSign, Brain, Inbox, Lock, Terminal, ShoppingBag,
 } from "lucide-react"
 import { BRAND } from "@/lib/brand"
-import { isEmbedded } from "@/lib/embed-session"
-import { safeLocal, safeSession } from "@/lib/safe-storage"
+import { safeLocal } from "@/lib/safe-storage"
+import { startInstagramLogin, standaloneUrl } from "@/lib/instagram-login"
 
 export function LandingPage() {
   const router = useRouter()
   const [popupBlocked, setPopupBlocked] = useState(false)
 
-  const buildOauthUrl = () => {
-    // Instagram Business Login (Instagram API with Instagram Login). client_id must be the
-    // Instagram app ID from the Instagram product page, not the parent Meta app ID.
-    const params = new URLSearchParams({
-      enable_fb_login: "0",
-      force_authentication: "1",
-      client_id: process.env.NEXT_PUBLIC_INSTAGRAM_APP_ID ?? "",
-      redirect_uri: process.env.NEXT_PUBLIC_INSTAGRAM_REDIRECT_URI ?? "",
-      response_type: "code",
-      scope: "instagram_business_basic,instagram_business_manage_messages,instagram_business_manage_comments",
-    })
-    // `state` round-trips the vendor across the top-level hop: sessionStorage
-    // does not reach a popup, and the iframe's embed session is left behind.
-    const vendorId = safeSession.getItem("kunfupay_vendor_id")
-    if (vendorId) params.set("state", vendorId)
-    return `https://www.instagram.com/oauth/authorize?${params.toString()}`
-  }
-
-  const handleLogin = () => {
-    const url = buildOauthUrl()
-
-    // Instagram serves X-Frame-Options: DENY, so its OAuth screen can never
-    // render inside the Kunfupay iframe. Standalone we navigate as usual;
-    // embedded we need a top-level window.
-    if (!isEmbedded()) {
-      window.location.href = url
-      return
-    }
-
-    // Opening a popup needs `allow-popups` in the host's iframe sandbox. When
-    // it is missing, window.open returns null — surface the way out instead of
-    // dead-ending on Instagram's refusal to be framed.
-    const popup = window.open(url, "_blank")
-    if (!popup) setPopupBlocked(true)
-  }
+  const handleLogin = () => setPopupBlocked(startInstagramLogin())
 
   const handleTestLogin = () => {
     safeLocal.setItem("ig_user_id", "9999999999")
@@ -77,7 +43,7 @@ export function LandingPage() {
           <p className="mt-1 text-[13px] text-muted-foreground">
             Abre la app en una pestaña nueva para conectar tu cuenta:{" "}
             <span className="font-mono-ui select-all break-all text-foreground">
-              {typeof window !== "undefined" ? `${window.location.origin}/embed` : ""}
+              {standaloneUrl()}
             </span>
           </p>
         </div>
