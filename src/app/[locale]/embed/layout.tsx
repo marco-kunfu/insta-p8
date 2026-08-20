@@ -4,7 +4,7 @@ import { Sidebar } from "@/components/layout/sidebar"
 import { TopBar } from "@/components/layout/topbar"
 import { useInstagramSession } from "@/hooks/use-instagram-session"
 import { KunfupayEmbedProvider } from "@/components/kunfupay/embed-provider"
-import { ConnectInstagram } from "@/components/layout/connect-instagram"
+import { LandingPage } from "@/components/layout/landing-page"
 import { Loader2 } from "lucide-react"
 
 export default function EmbedLayout({
@@ -34,11 +34,11 @@ function EmbedShell({
         )
     }
 
-    // No linked Instagram account: show the connect screen instead of the
-    // dashboard chrome, which would otherwise render as "@User connected"
-    // around pages that each say "please log in".
+    // No linked Instagram account: show the landing (with its "Log in"
+    // button) instead of the dashboard chrome, which would otherwise render
+    // as "@User connected" around pages that each say "please log in".
     if (!userId) {
-        return <ConnectInstagram />
+        return <LandingPage />
     }
 
     return (
