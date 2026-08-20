@@ -4,6 +4,7 @@ import { Sidebar } from "@/components/layout/sidebar"
 import { TopBar } from "@/components/layout/topbar"
 import { useInstagramSession } from "@/hooks/use-instagram-session"
 import { KunfupayEmbedProvider } from "@/components/kunfupay/embed-provider"
+import { ConnectInstagram } from "@/components/layout/connect-instagram"
 import { Loader2 } from "lucide-react"
 
 export default function EmbedLayout({
@@ -23,7 +24,7 @@ function EmbedShell({
 }: {
     children: React.ReactNode
 }) {
-    const { username, profilePic, logout, isLoading } = useInstagramSession()
+    const { userId, username, profilePic, logout, isLoading } = useInstagramSession()
 
     if (isLoading) {
         return (
@@ -31,6 +32,13 @@ function EmbedShell({
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
         )
+    }
+
+    // No linked Instagram account: show the connect screen instead of the
+    // dashboard chrome, which would otherwise render as "@User connected"
+    // around pages that each say "please log in".
+    if (!userId) {
+        return <ConnectInstagram />
     }
 
     return (
