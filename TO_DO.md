@@ -4,7 +4,7 @@ Lista de tareas pendientes para el desarrollo de esta app. Actualiza este archiv
 
 ## Pendiente
 
-- [ ] Configurar `DATABASE_URL` y `DIRECT_URL` en `.env.local` (connection string del Postgres de Supabase) y ejecutar `npm run db:push` para crear `vendors`, la columna `users.vendor_id` y la tabla `kunfupay_webhook_events`
+- [ ] Probar el flujo completo de login de Instagram desde el iframe en producción (conectar → pestaña → volver al panel) tras desplegar el fix de sesión por vendorId
 - [ ] Pedir a un admin de Kunfupay: capability `EXTERNAL_INTEGRATIONS_API_ACCESS`, eventos `external.*` en `allowedWebhookEvents`, `redirectUri` y `webhookUrl` (HTTPS) de la app
 - [ ] Probar `GET /api/kunfupay/me` desde una sesión embed real (valida credenciales + token + instalación + capability)
 - [ ] Implementar la lógica de negocio de los eventos `external.*` (hoy solo se registran en `kunfupay_webhook_events`)
@@ -20,6 +20,9 @@ Lista de tareas pendientes para el desarrollo de esta app. Actualiza este archiv
 
 ## Completado
 
+- [x] `DATABASE_URL`/`DIRECT_URL` configuradas y `db:push` aplicado (tablas `vendors`, `kunfupay_webhook_events` y columna `users.vendor_id` verificadas en producción)
+- [x] Sesión del embed resuelta por servidor (`GET/DELETE /api/instagram/account` por vendorId) en vez de localStorage — el storage del iframe está particionado por Chrome y no ve lo que escribe la pestaña de login
+- [x] Retorno del OAuth robusto: notificación multi-canal (`instagram-link-events`), re-chequeo al recuperar el foco, errores visibles con toast, y landing como puerta del embed en vez de la pantalla-barrera
 - [x] Migración a la estructura del kunfupay-app-template (`src/`, rama `develop`)
 - [x] Capa de integración Kunfupay: embed SDK, verify-token, webhook, middleware CORS
 - [x] Localización con `next-intl` (es/en/fr/pt) + sync de idioma con el host vía postMessage

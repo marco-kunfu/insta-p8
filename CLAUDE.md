@@ -44,7 +44,9 @@ A KunfuApp: Instagram DM automation (inbox, keyword automations, ice breakers, A
 - **embed_token from URL** (`?embed_token=...`); postMessage `kunfupay:token` is only for refresh.
 - **Dev shortcut**: `?vendorId=xxx` bypasses token verification locally (`/embed?vendorId=test-vendor`).
 - **CORS is open (`*`)** — intentional, required by the iframe sandbox.
-- **Instagram account linking**: the OAuth callback (`/api/instagram/callback`) receives the `vendorId` from the embed session and stamps it on the `users` row.
+- **Instagram account linking**: the OAuth callback (`/api/instagram/callback`) receives the `vendorId` from the embed session (round-tripped through the OAuth `state` param) and stamps it on the `users` row.
+- **Session resolution (embed vs standalone)**: embedded, the session is server truth — `GET /api/instagram/account?vendorId=...` (the iframe's localStorage is partitioned by Chrome and shared with standalone tabs, so it can't be trusted). Standalone keeps localStorage. See `src/hooks/use-instagram-session.ts`.
+- **OAuth return leg**: the login tab notifies via `src/lib/instagram-link-events.ts` (BroadcastChannel + storage ping + `window.opener` postMessage) and the embed also re-checks on window focus — the only signal that always survives.
 
 ## Database
 
