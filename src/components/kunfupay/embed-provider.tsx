@@ -4,24 +4,44 @@ import { createContext, useContext, useEffect, useState } from "react"
 import { useLocale } from "next-intl"
 import { useRouter, usePathname } from "@/i18n/navigation"
 import { kunfupayEmbed } from "@/lib/kunfupay-embed-sdk"
-import { setEmbedToken, isEmbedded } from "@/lib/embed-session"
+import { setEmbedToken } from "@/lib/embed-session"
 import { safeSession } from "@/lib/safe-storage"
 import { routing } from "@/i18n/routing"
 import { Loader2 } from "lucide-react"
 
+/**
+ * Panel mode, decided BY ROUTE — the one&one concept:
+ *   /embed/*     → "embed": the app lives inside the Kunfupay iframe.
+ *   /dashboard/* → "standalone": the app opened directly on its own domain.
+ * No window.top sniffing: each surface mounts the provider that matches it.
+ */
+export type PanelMode = "standalone" | "embed"
+
 type VendorContextValue = {
+  /** Kunfupay vendor id — always set in embed mode, null in standalone. */
   vendorId: string | null
-  /** True when running outside the Kunfupay iframe (no vendor session). */
-  isStandalone: boolean
+  mode: PanelMode
 }
 
 const VendorContext = createContext<VendorContextValue>({
   vendorId: null,
-  isStandalone: false,
+  mode: "standalone",
 })
 
 export function useVendor() {
   return useContext(VendorContext)
+}
+
+/**
+ * Standalone surface (/dashboard): no Kunfupay handshake, no vendor session.
+ * The Instagram session lives in localStorage and OAuth runs in this same tab.
+ */
+export function StandaloneVendorProvider({ children }: { children: React.ReactNode }) {
+  return (
+    <VendorContext.Provider value={{ vendorId: null, mode: "standalone" }}>
+      {children}
+    </VendorContext.Provider>
+  )
 }
 
 function normalizeLocale(raw: string | null | undefined): (typeof routing.locales)[number] | null {
@@ -42,6 +62,10 @@ function normalizeLocale(raw: string | null | undefined): (typeof routing.locale
  *
  * vendorId persists in sessionStorage so in-app navigation (which drops the
  * query params) keeps the vendor without re-verifying on every page.
+ *
+ * This provider assumes it IS embedded (the /embed route decides that); a
+ * visit with no way to resolve a vendor is an error, not a standalone
+ * fallback — the standalone surface lives at /dashboard.
  */
 export function KunfupayEmbedProvider({ children }: { children: React.ReactNode }) {
   const currentLocale = useLocale()
@@ -49,7 +73,6 @@ export function KunfupayEmbedProvider({ children }: { children: React.ReactNode 
   const pathname = usePathname()
 
   const [vendorId, setVendorId] = useState<string | null>(null)
-  const [standalone, setStandalone] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   // ---- Locale sync with the host ----
@@ -115,12 +138,6 @@ export function KunfupayEmbedProvider({ children }: { children: React.ReactNode 
 
     if (stored) {
       setVendorId(stored)
-    } else if (!isEmbedded()) {
-      // Standalone: the app was opened directly in a tab, not in the Kunfupay
-      // dashboard. There is no vendor session, but the Instagram side of the
-      // app stays usable — and Business Login only works outside the iframe,
-      // since Instagram refuses to be framed.
-      setStandalone(true)
     } else {
       setError("missing-token")
     }
@@ -148,13 +165,14 @@ export function KunfupayEmbedProvider({ children }: { children: React.ReactNode 
       <div className="flex h-screen flex-col items-center justify-center gap-2 bg-background text-foreground">
         <p className="font-medium">No se pudo verificar el acceso</p>
         <p className="text-sm text-muted-foreground">
-          Abre esta app desde tu panel de Kunfupay (/embed?embed_token=...) o usa ?vendorId=test-vendor en desarrollo.
+          Abre esta app desde tu panel de Kunfupay (/embed?embed_token=...). Para usarla
+          fuera del panel, entra por /dashboard.
         </p>
       </div>
     )
   }
 
-  if (!vendorId && !standalone) {
+  if (!vendorId) {
     return (
       <div className="flex h-screen items-center justify-center bg-background text-foreground">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -163,7 +181,7 @@ export function KunfupayEmbedProvider({ children }: { children: React.ReactNode 
   }
 
   return (
-    <VendorContext.Provider value={{ vendorId, isStandalone: standalone }}>
+    <VendorContext.Provider value={{ vendorId, mode: "embed" }}>
       {children}
     </VendorContext.Provider>
   )

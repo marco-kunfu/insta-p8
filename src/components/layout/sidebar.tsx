@@ -17,12 +17,14 @@ import { BRAND } from "@/lib/brand"
  */
 const SHOW_PLACEHOLDER_PAGES = false
 
+// Paths are suffixes: the base (/embed inside the Kunfupay iframe, /dashboard
+// standalone) comes from the current route — the mode IS the route.
 const NAV = [
-  { href: "/embed", icon: LayoutDashboard, label: "Overview" },
-  { href: "/embed/automations", icon: Zap, label: "Automations" },
-  { href: "/embed/inbox", icon: MessageSquare, label: "Inbox" },
-  { href: "/embed/ice-breakers", icon: Snowflake, label: "Ice breakers" },
-  { href: "/embed/analytics", icon: BarChart3, label: "Analytics", placeholder: true },
+  { path: "", icon: LayoutDashboard, label: "Overview" },
+  { path: "/automations", icon: Zap, label: "Automations" },
+  { path: "/inbox", icon: MessageSquare, label: "Inbox" },
+  { path: "/ice-breakers", icon: Snowflake, label: "Ice breakers" },
+  { path: "/analytics", icon: BarChart3, label: "Analytics", placeholder: true },
 ]
 
 const VISIBLE_NAV = NAV.filter((item) => SHOW_PLACEHOLDER_PAGES || !item.placeholder)
@@ -37,6 +39,7 @@ interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {
 
 export function Sidebar({ className, username = "creator", profilePic, onLogout, onNavigate, ...props }: SidebarProps) {
   const pathname = usePathname()
+  const base = pathname?.includes("/embed") ? "/embed" : "/dashboard"
 
   return (
     <aside className={cn("flex flex-col bg-sidebar text-sidebar-foreground", className)} {...props}>
@@ -52,8 +55,9 @@ export function Sidebar({ className, username = "creator", profilePic, onLogout,
 
       {/* Nav */}
       <nav className="flex-1 px-3 py-4 space-y-0.5">
-        {VISIBLE_NAV.map(({ href, icon: Icon, label }) => {
-          const active = pathname === href
+        {VISIBLE_NAV.map(({ path, icon: Icon, label }) => {
+          const href = base + path
+          const active = pathname === href || pathname?.endsWith(href)
           return (
             <Link
               key={href}

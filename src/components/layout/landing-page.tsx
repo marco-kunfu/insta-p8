@@ -9,17 +9,21 @@ import {
 import { BRAND } from "@/lib/brand"
 import { safeLocal } from "@/lib/safe-storage"
 import { startInstagramLogin, standaloneUrl } from "@/lib/instagram-login"
+import { useVendor } from "@/components/kunfupay/embed-provider"
 
 export function LandingPage() {
   const router = useRouter()
+  // Mode comes from the route's provider: "embed" under /embed, "standalone"
+  // under /dashboard or on the public landing (context default).
+  const { mode } = useVendor()
   const [popupBlocked, setPopupBlocked] = useState(false)
 
-  const handleLogin = () => setPopupBlocked(startInstagramLogin())
+  const handleLogin = () => setPopupBlocked(startInstagramLogin(mode))
 
   const handleTestLogin = () => {
     safeLocal.setItem("ig_user_id", "9999999999")
     safeLocal.setItem("ig_username", "test_creator")
-    router.push("/embed")
+    router.push(mode === "embed" ? "/embed" : "/dashboard")
   }
 
   return (
