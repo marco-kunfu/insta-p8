@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useInstagramSession } from "@/hooks/use-instagram-session"
+import { useVendor } from "@/components/kunfupay/embed-provider"
 import { Activity, Users, MessageCircle, Zap, Loader2, LayoutDashboard, ChevronRight } from "lucide-react"
 
 interface DashboardStats {
@@ -24,6 +25,10 @@ interface DashboardStats {
 
 export default function DashboardPage() {
     const { username, userId, isLoading: isSessionLoading } = useInstagramSession()
+    // This page serves both surfaces (/embed re-exported as /dashboard);
+    // in-panel links must stay on the surface the user is in.
+    const { mode } = useVendor()
+    const base = mode === "embed" ? "/embed" : "/dashboard"
     const [stats, setStats] = useState<DashboardStats | null>(null)
     const [loading, setLoading] = useState(true)
 
@@ -143,8 +148,8 @@ export default function DashboardPage() {
                     />
                     <div className="space-y-1">
                         {[
-                            { icon: <Zap className="h-4 w-4" />, label: "New rule", desc: "Build an automation", href: "/embed/automations" },
-                            { icon: <Users className="h-4 w-4" />, label: "View audience", desc: "See who you reached", href: "/embed/inbox" },
+                            { icon: <Zap className="h-4 w-4" />, label: "New rule", desc: "Build an automation", href: `${base}/automations` },
+                            { icon: <Users className="h-4 w-4" />, label: "View audience", desc: "See who you reached", href: `${base}/inbox` },
                         ].map((a) => (
                             <Link
                                 key={a.label}

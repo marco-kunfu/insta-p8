@@ -11,7 +11,7 @@ Lista de tareas pendientes para el desarrollo de esta app. Actualiza este archiv
 - [ ] Extraer los textos hardcodeados del dashboard (inbox, automations, ice-breakers, settings) a `messages/{es,en,fr,pt}.json` con `useTranslations`
 - [ ] Filtrar los datos por `vendorId` en las rutas API (hoy el scoping es por cuenta de Instagram; falta comprobar que la cuenta pertenece al vendor de la sesión embed)
 - [ ] Extender el webhook de Kunfupay (`sale.completed`) con lógica propia si aplica
-- [ ] Decidir el destino de la landing (`src/app/[locale]/page.tsx`): en modo embed ya no hay login standalone
+- [ ] Probar el flujo standalone completo en producción (`/dashboard`: login en la misma pestaña → retorno → panel)
 - [ ] Probar el flujo completo dentro del dashboard de Kunfupay (handshake, resize, cambio de idioma)
 
 ## En progreso
@@ -20,6 +20,7 @@ Lista de tareas pendientes para el desarrollo de esta app. Actualiza este archiv
 
 ## Completado
 
+- [x] Modo por ruta (concepto one&one): `/embed/*` = iframe (handshake obligatorio), `/dashboard/*` = standalone (misma pestaña para el OAuth, nunca `window.close()`); `state` codifica modo+vendor y `/instagram-return` resuelve el retorno según el modo
 - [x] `DATABASE_URL`/`DIRECT_URL` configuradas y `db:push` aplicado (tablas `vendors`, `kunfupay_webhook_events` y columna `users.vendor_id` verificadas en producción)
 - [x] Sesión del embed resuelta por servidor (`GET/DELETE /api/instagram/account` por vendorId) en vez de localStorage — el storage del iframe está particionado por Chrome y no ve lo que escribe la pestaña de login
 - [x] Retorno del OAuth robusto: notificación multi-canal (`instagram-link-events`), re-chequeo al recuperar el foco, errores visibles con toast, y landing como puerta del embed en vez de la pantalla-barrera

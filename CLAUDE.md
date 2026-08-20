@@ -45,8 +45,9 @@ A KunfuApp: Instagram DM automation (inbox, keyword automations, ice breakers, A
 - **Dev shortcut**: `?vendorId=xxx` bypasses token verification locally (`/embed?vendorId=test-vendor`).
 - **CORS is open (`*`)** — intentional, required by the iframe sandbox.
 - **Instagram account linking**: the OAuth callback (`/api/instagram/callback`) receives the `vendorId` from the embed session (round-tripped through the OAuth `state` param) and stamps it on the `users` row.
-- **Session resolution (embed vs standalone)**: embedded, the session is server truth — `GET /api/instagram/account?vendorId=...` (the iframe's localStorage is partitioned by Chrome and shared with standalone tabs, so it can't be trusted). Standalone keeps localStorage. See `src/hooks/use-instagram-session.ts`.
-- **OAuth return leg**: the login tab notifies via `src/lib/instagram-link-events.ts` (BroadcastChannel + storage ping + `window.opener` postMessage) and the embed also re-checks on window focus — the only signal that always survives.
+- **Panel mode is decided BY ROUTE** (the one&one concept, no `window.top` sniffing): `/embed/*` is always embed mode (Kunfupay handshake required), `/dashboard/*` is always standalone. Both render the same pages — `/dashboard` pages re-export `/embed` pages and each layout mounts the matching vendor provider around the shared `PanelShell`. `useVendor()` exposes `{ vendorId, mode }`.
+- **Session resolution by mode**: embed → server truth, `GET /api/instagram/account?vendorId=...` (the iframe's localStorage is partitioned by Chrome and shared with standalone tabs, so it can't be trusted). Standalone → localStorage. See `src/hooks/use-instagram-session.ts`.
+- **OAuth by mode**: standalone logs in on the SAME tab (`location.href`) and returns to `/dashboard`; embed opens a separate tab. The `state` param encodes mode + vendor (`e:<vendorId>` / `s:<vendorId?>`) and the callback GET lands on `/instagram-return`, which finishes the exchange and either notifies the iframe and closes (embed) or continues in place (standalone). Notifications go through `src/lib/instagram-link-events.ts` (BroadcastChannel + storage ping + `window.opener` postMessage) and the embed also re-checks on window focus — the only signal that always survives.
 
 ## Database
 

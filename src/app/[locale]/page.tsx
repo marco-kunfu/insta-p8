@@ -1,26 +1,21 @@
 "use client"
 
 import { useEffect } from "react"
-import { useSearchParams, useRouter } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { LandingPage } from "@/components/layout/landing-page"
 import { safeLocal } from "@/lib/safe-storage"
-import { Loader2 } from "lucide-react"
 
+// Public landing on the direct domain — standalone surface. The OAuth return
+// never lands here anymore (it goes to /instagram-return); this page only
+// forwards visitors who already have a local session to their dashboard.
 export default function Home() {
   const router = useRouter()
-  const searchParams = useSearchParams()
 
   useEffect(() => {
-    // Check if we have an active session or a callback code
-    const code = searchParams.get("code")
-    const savedId = safeLocal.getItem("ig_user_id")
-
-    if (code || savedId) {
-      // If code exists, Redirect to dashboard to handle the handshake (via the new hook)
-      // If local session exists, also redirect
-      router.replace("/embed?code=" + (code || ""))
+    if (safeLocal.getItem("ig_user_id")) {
+      router.replace("/dashboard")
     }
-  }, [searchParams, router])
+  }, [router])
 
   return <LandingPage />
 }
