@@ -4,15 +4,21 @@ import { createContext, useContext, useEffect, useState } from "react"
 import { useLocale } from "next-intl"
 import { useRouter, usePathname } from "@/i18n/navigation"
 import { kunfupayEmbed } from "@/lib/kunfupay-embed-sdk"
-import { setEmbedToken } from "@/lib/embed-session"
+import { setEmbedToken, isEmbedded } from "@/lib/embed-session"
+import { safeSession } from "@/lib/safe-storage"
 import { routing } from "@/i18n/routing"
 import { Loader2 } from "lucide-react"
 
 type VendorContextValue = {
   vendorId: string | null
+  /** True when running outside the Kunfupay iframe (no vendor session). */
+  isStandalone: boolean
 }
 
-const VendorContext = createContext<VendorContextValue>({ vendorId: null })
+const VendorContext = createContext<VendorContextValue>({
+  vendorId: null,
+  isStandalone: false,
+})
 
 export function useVendor() {
   return useContext(VendorContext)
@@ -43,6 +49,7 @@ export function KunfupayEmbedProvider({ children }: { children: React.ReactNode 
   const pathname = usePathname()
 
   const [vendorId, setVendorId] = useState<string | null>(null)
+  const [standalone, setStandalone] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   // ---- Locale sync with the host ----
@@ -74,10 +81,10 @@ export function KunfupayEmbedProvider({ children }: { children: React.ReactNode 
     const urlParams = new URLSearchParams(window.location.search)
     const token = urlParams.get("embed_token")
     const devVendorId = urlParams.get("vendorId")
-    const stored = window.sessionStorage.getItem("kunfupay_vendor_id")
+    const stored = safeSession.getItem("kunfupay_vendor_id")
 
     if (devVendorId) {
-      window.sessionStorage.setItem("kunfupay_vendor_id", devVendorId)
+      safeSession.setItem("kunfupay_vendor_id", devVendorId)
       setVendorId(devVendorId)
       kunfupayEmbed.ready()
       return
@@ -98,7 +105,7 @@ export function KunfupayEmbedProvider({ children }: { children: React.ReactNode 
           return res.json()
         })
         .then(({ vendorId: vid }) => {
-          window.sessionStorage.setItem("kunfupay_vendor_id", vid)
+          safeSession.setItem("kunfupay_vendor_id", vid)
           setVendorId(vid)
         })
         .catch(() => setError("auth"))
@@ -108,6 +115,12 @@ export function KunfupayEmbedProvider({ children }: { children: React.ReactNode 
 
     if (stored) {
       setVendorId(stored)
+    } else if (!isEmbedded()) {
+      // Standalone: the app was opened directly in a tab, not in the Kunfupay
+      // dashboard. There is no vendor session, but the Instagram side of the
+      // app stays usable — and Business Login only works outside the iframe,
+      // since Instagram refuses to be framed.
+      setStandalone(true)
     } else {
       setError("missing-token")
     }
@@ -141,7 +154,7 @@ export function KunfupayEmbedProvider({ children }: { children: React.ReactNode 
     )
   }
 
-  if (!vendorId) {
+  if (!vendorId && !standalone) {
     return (
       <div className="flex h-screen items-center justify-center bg-background text-foreground">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -149,5 +162,9 @@ export function KunfupayEmbedProvider({ children }: { children: React.ReactNode 
     )
   }
 
-  return <VendorContext.Provider value={{ vendorId }}>{children}</VendorContext.Provider>
+  return (
+    <VendorContext.Provider value={{ vendorId, isStandalone: standalone }}>
+      {children}
+    </VendorContext.Provider>
+  )
 }

@@ -1,24 +1,58 @@
 "use client"
 
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import {
   Zap, MessageCircle, Sparkles, ArrowUpRight,
   Send, AtSign, Brain, Inbox, Lock, Terminal, ShoppingBag,
 } from "lucide-react"
 import { BRAND } from "@/lib/brand"
+import { isEmbedded } from "@/lib/embed-session"
+import { safeLocal, safeSession } from "@/lib/safe-storage"
 
 export function LandingPage() {
   const router = useRouter()
+  const [popupBlocked, setPopupBlocked] = useState(false)
 
-  const handleLogin = () => {
+  const buildOauthUrl = () => {
     // Instagram Business Login (Instagram API with Instagram Login). client_id must be the
     // Instagram app ID from the Instagram product page, not the parent Meta app ID.
-    window.location.href = `https://www.instagram.com/oauth/authorize?enable_fb_login=0&force_authentication=1&client_id=${process.env.NEXT_PUBLIC_INSTAGRAM_APP_ID}&redirect_uri=${process.env.NEXT_PUBLIC_INSTAGRAM_REDIRECT_URI}&response_type=code&scope=instagram_business_basic%2Cinstagram_business_manage_messages%2Cinstagram_business_manage_comments`
+    const params = new URLSearchParams({
+      enable_fb_login: "0",
+      force_authentication: "1",
+      client_id: process.env.NEXT_PUBLIC_INSTAGRAM_APP_ID ?? "",
+      redirect_uri: process.env.NEXT_PUBLIC_INSTAGRAM_REDIRECT_URI ?? "",
+      response_type: "code",
+      scope: "instagram_business_basic,instagram_business_manage_messages,instagram_business_manage_comments",
+    })
+    // `state` round-trips the vendor across the top-level hop: sessionStorage
+    // does not reach a popup, and the iframe's embed session is left behind.
+    const vendorId = safeSession.getItem("kunfupay_vendor_id")
+    if (vendorId) params.set("state", vendorId)
+    return `https://www.instagram.com/oauth/authorize?${params.toString()}`
+  }
+
+  const handleLogin = () => {
+    const url = buildOauthUrl()
+
+    // Instagram serves X-Frame-Options: DENY, so its OAuth screen can never
+    // render inside the Kunfupay iframe. Standalone we navigate as usual;
+    // embedded we need a top-level window.
+    if (!isEmbedded()) {
+      window.location.href = url
+      return
+    }
+
+    // Opening a popup needs `allow-popups` in the host's iframe sandbox. When
+    // it is missing, window.open returns null — surface the way out instead of
+    // dead-ending on Instagram's refusal to be framed.
+    const popup = window.open(url, "_blank")
+    if (!popup) setPopupBlocked(true)
   }
 
   const handleTestLogin = () => {
-    localStorage.setItem("ig_user_id", "9999999999")
-    localStorage.setItem("ig_username", "test_creator")
+    safeLocal.setItem("ig_user_id", "9999999999")
+    safeLocal.setItem("ig_username", "test_creator")
     router.push("/embed")
   }
 
@@ -34,6 +68,20 @@ export function LandingPage() {
       {/* Morfeo puts atmosphere in the upper corners instead of film grain, which
           only reads as texture on a near-black surface. */}
       <div className="morfeo-atmosphere pointer-events-none fixed inset-0 z-0" />
+
+      {popupBlocked && (
+        <div className="relative z-50 border-b border-primary/30 bg-primary-soft px-5 py-4 md:px-10">
+          <p className="text-sm font-medium text-foreground">
+            Instagram no permite iniciar sesión dentro del panel de Kunfupay.
+          </p>
+          <p className="mt-1 text-[13px] text-muted-foreground">
+            Abre la app en una pestaña nueva para conectar tu cuenta:{" "}
+            <span className="font-mono-ui select-all break-all text-foreground">
+              {typeof window !== "undefined" ? `${window.location.origin}/embed` : ""}
+            </span>
+          </p>
+        </div>
+      )}
 
       {/* Nav — Morfeo header height: 56px mobile, 64px desktop */}
       <nav className="relative z-50 flex items-center justify-between px-5 md:px-10 min-h-14 md:min-h-16 border-b border-border">
