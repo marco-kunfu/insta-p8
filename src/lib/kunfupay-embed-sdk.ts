@@ -69,8 +69,9 @@ class KunfupayEmbed {
   }
 
   /**
-   * Resolves the theme the HOST wants the embedded app to render in,
-   * from `?theme=` (set by the Kunfupay dashboard when embedding).
+   * Resolves the theme the HOST wants the embedded app to render in.
+   * The Kunfupay dashboard embeds with `?kunfupay_theme=` (verified against
+   * the live host bundle); `?theme=` stays as an alias for hand-built URLs.
    * Returns the raw string ("light" | "dark" | "system" | anything);
    * the caller validates it.
    *
@@ -79,7 +80,8 @@ class KunfupayEmbed {
    */
   getThemeFromUrl(): string | null {
     if (typeof window === "undefined") return null;
-    return new URLSearchParams(window.location.search).get("theme");
+    const params = new URLSearchParams(window.location.search);
+    return params.get("kunfupay_theme") ?? params.get("theme");
   }
 
   onTokenReceived(cb: TokenCallback) {
@@ -143,9 +145,14 @@ class KunfupayEmbed {
       return;
     }
 
-    if (msg.type === "kunfupay:theme" && msg.payload?.theme) {
-      this.lastTheme = msg.payload.theme;
-      this.themeCallbacks.forEach((cb) => cb(msg.payload.theme));
+    if (msg.type === "kunfupay:theme") {
+      // The live host sends payload {theme, mode}; take whichever of the two
+      // carries a value, in that order, and let the subscriber validate it.
+      const theme = msg.payload?.theme ?? msg.payload?.mode;
+      if (theme) {
+        this.lastTheme = theme;
+        this.themeCallbacks.forEach((cb) => cb(theme));
+      }
       return;
     }
 

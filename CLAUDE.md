@@ -28,7 +28,7 @@ A KunfuApp: Instagram DM automation (inbox, keyword automations, ice breakers, A
 - `src/i18n/{routing,request,navigation}.ts` — `next-intl`: locales `es`, `en`, `fr`, `pt`, default `es`, `localePrefix: "as-needed"`.
 - `src/app/layout.tsx` — minimal root; the real `<html>`/`<body>` shell (fonts, theme bootstrap, providers) lives in `src/app/[locale]/layout.tsx`.
 - `src/components/kunfupay/embed-provider.tsx` — embed handshake (token → vendorId → `ready()`), iframe auto-resize, host locale sync. Exposes `useVendor()`.
-- `src/components/kunfupay/host-theme-sync.tsx` — in embed mode the theme belongs to the host: `?theme=` on load, live updates via postMessage `kunfupay:theme`, `prefers-color-scheme` when the host says nothing. Never persisted.
+- `src/components/kunfupay/host-theme-sync.tsx` — in embed mode the theme belongs to the host: `?kunfupay_theme=` on load (`?theme=` alias), live updates via postMessage `kunfupay:theme` (payload `{theme, mode}`; the host also sends it right after our `ready`), `prefers-color-scheme` when the host says nothing. Never persisted. The production iframe src lives at `insta-p8-five-liard.vercel.app`.
 
 ### App-specific layer
 

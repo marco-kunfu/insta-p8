@@ -24,7 +24,8 @@ function normalizeTheme(raw: string | null | undefined): HostTheme | null {
  * inspected:
  *   1. postMessage `kunfupay:theme` — authoritative, and live (a theme flip
  *      in the dashboard reaches an already-open iframe).
- *   2. `?theme=` on the embed URL — the host's value at load time.
+ *   2. `?kunfupay_theme=` (the param the live host actually sends; `?theme=`
+ *      kept as an alias) — the host's value at load time.
  *   3. `prefers-color-scheme` — the OS preference, which the iframe inherits
  *      and which the host most likely follows too. Better than pinning to
  *      light when the host tells us nothing.
