@@ -44,6 +44,11 @@
   --primary-foreground: #ffffff;
   --primary-hover: #9c87fe;
   --primary-active: #5c21e0;
+  /* Violet for TEXT sitting directly on --background. #734bfc reads on white
+     (4.6:1) but not on the dark surface (3.3:1), so dark mode lifts it to the
+     ramp's 300 stop. Use this instead of text-primary whenever the violet is
+     the letterform, not a fill behind white text. */
+  --primary-text: #734bfc;
   --primary-soft: rgba(115, 75, 252, 0.08);
   --primary-softer: rgba(115, 75, 252, 0.04);
 
@@ -122,6 +127,7 @@
 
   --primary: #734bfc;
   --primary-foreground: #ffffff;
+  --primary-text: #bcb2ff;
   --primary-soft: rgba(115, 75, 252, 0.16);
   --primary-softer: rgba(115, 75, 252, 0.08);
 
@@ -184,6 +190,7 @@
   --color-primary-foreground: var(--primary-foreground);
   --color-primary-hover: var(--primary-hover);
   --color-primary-active: var(--primary-active);
+  --color-primary-text: var(--primary-text);
   --color-primary-soft: var(--primary-soft);
   --color-primary-softer: var(--primary-softer);
   --color-secondary: var(--secondary);

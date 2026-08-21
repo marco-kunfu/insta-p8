@@ -70,7 +70,10 @@ export function PanelNav({ className, onNavigate }: { className?: string; onNavi
                   "flex items-center gap-2 border-b-2 px-3 text-sm transition-colors",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
                   active
-                    ? "border-primary font-semibold text-primary"
+                    // primary-text, not primary: the label and underline sit
+                    // straight on --background, where #734bfc fails contrast
+                    // in dark mode (see the token's note in globals.css).
+                    ? "border-primary-text font-semibold text-primary-text"
                     : "border-transparent text-muted-foreground hover:border-border hover:text-foreground",
                 )}
               >
