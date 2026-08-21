@@ -108,7 +108,7 @@ export default function InstagramReturnPage() {
 
       {status === "linked-embed" && (
         <>
-          <CheckCircle2 className="h-10 w-10 text-primary" />
+          <CheckCircle2 className="h-10 w-10 text-primary-text" />
           <h1 className="text-xl font-semibold">Cuenta conectada</h1>
           <p className="max-w-sm text-sm text-muted-foreground">
             Ya puedes cerrar esta pestaña y volver al panel de Kunfupay — {BRAND.name} se

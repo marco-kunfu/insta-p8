@@ -647,7 +647,7 @@ export function CreateRuleForm({ userId, triggerSource, onSuccess, editRule }: C
                             {/* Products are the point of this integration, so they get a
                                 filled pill instead of sitting as a peer of a plain link. */}
                             <button type="button" onClick={openProductPicker} disabled={buttons.length >= 3}
-                              className="flex items-center gap-1.5 rounded-full bg-primary-soft px-3 py-1.5 text-xs font-semibold text-primary transition-colors hover:bg-primary/15 disabled:opacity-40">
+                              className="flex items-center gap-1.5 rounded-full bg-primary-soft px-3 py-1.5 text-xs font-semibold text-primary-text transition-colors hover:bg-primary/15 disabled:opacity-40">
                               <ShoppingBag className="w-3.5 h-3.5" /> Add product
                             </button>
                             <button type="button" onClick={addButton} disabled={buttons.length >= 3}
@@ -663,7 +663,7 @@ export function CreateRuleForm({ userId, triggerSource, onSuccess, editRule }: C
                             onClick={openProductPicker}
                             className="flex w-full items-center gap-3 rounded-2xl border border-border-card bg-primary-softer px-4 py-3.5 text-left transition-colors hover:border-primary/40 hover:bg-primary-soft"
                           >
-                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary">
+                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary-text">
                               <ShoppingBag className="h-4 w-4" />
                             </span>
                             <span className="min-w-0">
@@ -718,7 +718,7 @@ export function CreateRuleForm({ userId, triggerSource, onSuccess, editRule }: C
                                     onClick={() => addProductButton(prod)}
                                     className="group flex w-full items-center gap-3 rounded-xl px-2 py-2.5 text-left transition-colors hover:bg-primary-softer"
                                   >
-                                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary">
+                                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary-text">
                                       <ShoppingBag className="h-4 w-4" />
                                     </span>
                                     <span className="min-w-0 flex-1">
@@ -729,7 +729,7 @@ export function CreateRuleForm({ userId, triggerSource, onSuccess, editRule }: C
                                     </span>
                                     {/* An explicit affordance: a lone "+" at the far edge did
                                         not read as the row's action. */}
-                                    <span className="flex h-6 shrink-0 items-center gap-1 rounded-full border border-border px-2 text-[11px] font-semibold text-primary transition-colors group-hover:border-primary/40 group-hover:bg-primary-soft">
+                                    <span className="flex h-6 shrink-0 items-center gap-1 rounded-full border border-border px-2 text-[11px] font-semibold text-primary-text transition-colors group-hover:border-primary/40 group-hover:bg-primary-soft">
                                       <Plus className="h-3 w-3" /> Add
                                     </span>
                                   </button>
@@ -745,12 +745,12 @@ export function CreateRuleForm({ userId, triggerSource, onSuccess, editRule }: C
                             // checkout URL is not an editable field the user can break.
                             <div key={btn.id} className="rounded-2xl border border-primary/25 bg-primary-softer p-3">
                               <div className="flex items-center gap-3">
-                                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary">
+                                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary-text">
                                   <ShoppingBag className="h-4 w-4" />
                                 </span>
                                 <div className="min-w-0 flex-1">
                                   <p className="truncate text-[13px] font-semibold text-foreground">{btn.product.name}</p>
-                                  <p className="morfeo-eyebrow text-primary">
+                                  <p className="morfeo-eyebrow text-primary-text">
                                     {btn.product.free ? "Free" : `${btn.product.price} ${btn.product.currency.toUpperCase()}`}
                                   </p>
                                 </div>

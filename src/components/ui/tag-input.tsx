@@ -43,7 +43,7 @@ export function TagInput({ value, onChange, placeholder, className }: TagInputPr
                 <Badge
                     key={index}
                     variant="secondary"
-                    className="bg-primary/10 text-primary border-primary/25 hover:bg-primary/20 pl-2.5 pr-1 py-1 text-xs font-medium gap-1.5"
+                    className="bg-primary/10 text-primary-text border-primary/25 hover:bg-primary/20 pl-2.5 pr-1 py-1 text-xs font-medium gap-1.5"
                 >
                     {tag}
                     <button

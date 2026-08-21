@@ -69,7 +69,7 @@ export function LandingPage() {
             {process.env.NODE_ENV === "development" && (
               <button
                 onClick={handleTestLogin}
-                className="group flex items-center gap-2 rounded-full border border-primary/25 px-7 py-4 font-mono-ui text-sm font-bold text-primary transition-all hover:bg-primary-soft active:scale-[0.98]"
+                className="group flex items-center gap-2 rounded-full border border-primary/25 px-7 py-4 font-mono-ui text-sm font-bold text-primary-text transition-all hover:bg-primary-soft active:scale-[0.98]"
               >
                 <Terminal className="h-4 w-4" aria-hidden="true" />
                 Dev Login
@@ -108,7 +108,7 @@ export function LandingPage() {
           {process.env.NODE_ENV === "development" && (
             <button
               onClick={handleTestLogin}
-              className="font-mono-ui text-xs font-bold text-primary border border-primary/30 rounded-full px-4 py-1.5 hover:bg-primary-soft transition-colors"
+              className="font-mono-ui text-xs font-bold text-primary-text border border-primary/30 rounded-full px-4 py-1.5 hover:bg-primary-soft transition-colors"
             >
               Dev Login
             </button>
@@ -134,7 +134,7 @@ export function LandingPage() {
           <h1 className="fade-up font-serif-display text-[15vw] md:text-[7.5rem] leading-[0.95] tracking-tight" style={{ animationDelay: "80ms" }}>
             Your DMs,
             <br />
-            <span className="italic text-primary">selling for you.</span>
+            <span className="italic text-primary-text">selling for you.</span>
           </h1>
 
           <div className="fade-up mt-10 flex flex-col md:flex-row md:items-end gap-8 md:gap-16" style={{ animationDelay: "160ms" }}>
@@ -153,7 +153,7 @@ export function LandingPage() {
               {process.env.NODE_ENV === "development" && (
                 <button
                   onClick={handleTestLogin}
-                  className="group flex items-center gap-2 font-mono-ui text-sm font-bold text-primary border border-primary/25 px-7 py-4 rounded-full hover:bg-primary-soft active:scale-[0.98] transition-all"
+                  className="group flex items-center gap-2 font-mono-ui text-sm font-bold text-primary-text border border-primary/25 px-7 py-4 rounded-full hover:bg-primary-soft active:scale-[0.98] transition-all"
                 >
                   <Terminal className="w-4 h-4" />
                   Dev Login
@@ -170,7 +170,7 @@ export function LandingPage() {
               <div key={copy} className="flex gap-8">
                 {["comment → DM", "keyword triggers", "story reactions", "AI auto-reply", "live inbox", "ice breakers", "follow gate", "quick replies", "kunfupay checkout", "public + private replies"].map((t) => (
                   <span key={t} className="flex items-center gap-8">
-                    {t} <span className="text-primary">✦</span>
+                    {t} <span className="text-primary-text">✦</span>
                   </span>
                 ))}
               </div>
@@ -244,7 +244,7 @@ export function LandingPage() {
 function Feature({ icon, title, desc }: { icon: React.ReactNode; title: string; desc: string }) {
   return (
     <div className="bg-card p-7 group hover:bg-primary-softer transition-colors">
-      <div className="w-9 h-9 rounded-lg border border-border flex items-center justify-center text-muted-foreground group-hover:text-primary group-hover:border-primary/30 transition-colors mb-5">
+      <div className="w-9 h-9 rounded-lg border border-border flex items-center justify-center text-muted-foreground group-hover:text-primary-text group-hover:border-primary/30 transition-colors mb-5">
         {icon}
       </div>
       <h3 className="font-mono-ui text-sm font-bold text-foreground mb-2">{title}</h3>

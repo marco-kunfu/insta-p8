@@ -70,7 +70,7 @@ export default function DashboardPage() {
         <div className="p-8 space-y-8 animate-in fade-in duration-700">
             {/* Page header — their pattern: icon chip, title, subtitle */}
             <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary-text">
                     <LayoutDashboard className="h-5 w-5" />
                 </div>
                 <div className="min-w-0">
@@ -156,7 +156,7 @@ export default function DashboardPage() {
                                 href={a.href}
                                 className="flex items-center gap-3 rounded-xl px-2 py-2.5 transition-colors hover:bg-primary-softer"
                             >
-                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary">
+                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary-text">
                                     {a.icon}
                                 </div>
                                 <div className="min-w-0 flex-1">
@@ -176,7 +176,7 @@ export default function DashboardPage() {
 function StatCard({ title, value, trend, icon }: { title: string, value: string, trend: string, icon: React.ReactNode }) {
     return (
         <div className="flex items-center gap-4 rounded-[20px] border border-border-card bg-card p-5 transition-colors hover:border-primary/30">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary-soft text-primary">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary-soft text-primary-text">
                 {icon}
             </div>
             <div className="min-w-0">
@@ -192,7 +192,7 @@ function StatCard({ title, value, trend, icon }: { title: string, value: string,
 function SectionHeader({ icon, title, subtitle, action }: { icon: React.ReactNode, title: string, subtitle: string, action?: React.ReactNode }) {
     return (
         <div className="mb-5 flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary-text">
                 {icon}
             </div>
             <div className="min-w-0 flex-1">

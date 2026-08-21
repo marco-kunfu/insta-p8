@@ -197,8 +197,8 @@ export default function AutomationsPage() {
                 {showAiContext && (
                     <div className="rounded-2xl border border-primary/20 bg-primary/[0.04] p-5 animate-in fade-in slide-in-from-top-2 duration-200 space-y-4">
                         <div className="flex items-center gap-2">
-                            <Brain className="w-4 h-4 text-primary" />
-                            <span className="text-sm font-semibold text-primary">AI Settings</span>
+                            <Brain className="w-4 h-4 text-primary-text" />
+                            <span className="text-sm font-semibold text-primary-text">AI Settings</span>
                         </div>
 
                         {/* API Key */}
