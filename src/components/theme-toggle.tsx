@@ -5,13 +5,13 @@ import { useTheme } from "@/components/theme-provider"
 import { cn } from "@/lib/utils"
 
 /**
- * Pill toggle for light/dark theme. Surfaces current state and the next
- * action via label and aria-label so it's usable without color cues.
+ * Icon button for light/dark theme. Compact on purpose — it lives in the
+ * panel header next to the account cluster, where the previous 64px pill
+ * outweighed the navigation it sat beside. State still surfaces through
+ * `role="switch"`/`aria-checked` plus the label, never through the icon alone.
  *
- * Color contrast:
- *   - track border uses --border (≥3:1 on background)
- *   - thumb uses --card + --card-foreground (≥4.5:1)
- *   - icons inside thumb pick the matching foreground token
+ * Color contrast: icon uses --muted-foreground on --background (≥4.5:1),
+ * border uses --border (≥3:1).
  */
 export function ThemeToggle({ className }: { className?: string }) {
   const { resolvedTheme, toggle } = useTheme()
@@ -26,24 +26,16 @@ export function ThemeToggle({ className }: { className?: string }) {
       aria-label={`Switch to ${isDark ? "light" : "dark"} theme`}
       title={`Switch to ${isDark ? "light" : "dark"} theme`}
       className={cn(
-        "group relative inline-flex h-8 w-16 shrink-0 items-center rounded-full border border-border bg-secondary transition-colors",
-        "hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+        "flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors",
+        "hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         className,
       )}
     >
-      <span
-        aria-hidden="true"
-        className={cn(
-          "pointer-events-none absolute top-1/2 -translate-y-1/2 h-6 w-6 rounded-full bg-card text-card-foreground shadow-sm border border-border transition-all duration-200 ease-out flex items-center justify-center",
-          isDark ? "left-[calc(100%-1.625rem-2px)]" : "left-[2px]",
-        )}
-      >
-        {isDark ? (
-          <Moon className="h-3.5 w-3.5" aria-hidden="true" />
-        ) : (
-          <Sun className="h-3.5 w-3.5" aria-hidden="true" />
-        )}
-      </span>
+      {isDark ? (
+        <Moon className="h-4 w-4" aria-hidden="true" />
+      ) : (
+        <Sun className="h-4 w-4" aria-hidden="true" />
+      )}
       {/* Hidden but readable label for assistive tech that ignores aria-label */}
       <span className="sr-only">{isDark ? "Dark theme enabled" : "Light theme enabled"}</span>
     </button>

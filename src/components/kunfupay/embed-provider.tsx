@@ -162,7 +162,7 @@ export function KunfupayEmbedProvider({ children }: { children: React.ReactNode 
 
   if (error) {
     return (
-      <div className="flex h-screen flex-col items-center justify-center gap-2 bg-background text-foreground">
+      <div className="flex flex-col items-center justify-center gap-2 py-24 text-center bg-background text-foreground">
         <p className="font-medium">No se pudo verificar el acceso</p>
         <p className="text-sm text-muted-foreground">
           Abre esta app desde tu panel de Kunfupay (/embed?embed_token=...). Para usarla
@@ -174,7 +174,7 @@ export function KunfupayEmbedProvider({ children }: { children: React.ReactNode 
 
   if (!vendorId) {
     return (
-      <div className="flex h-screen items-center justify-center bg-background text-foreground">
+      <div className="flex items-center justify-center py-24 bg-background text-foreground">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     )

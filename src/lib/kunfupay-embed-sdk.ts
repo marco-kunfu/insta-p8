@@ -2,15 +2,20 @@
 
 type TokenCallback = (token: string, expiresAt: number) => void;
 type LocaleCallback = (locale: string) => void;
+type ThemeCallback = (theme: string) => void;
 
 class KunfupayEmbed {
   private tokenCallbacks: TokenCallback[] = [];
   private localeCallbacks: LocaleCallback[] = [];
+  private themeCallbacks: ThemeCallback[] = [];
   private parentOrigin = "*";
   // Buffer the last locale received via postMessage so callbacks registered
   // after the host already sent `kunfupay:locale` still get it. The host
   // sends this right after the iframe loads, which often beats React hydration.
   private lastLocale: string | null = null;
+  // Same buffering for the theme: the host sends `kunfupay:theme` as soon as
+  // the frame loads, which usually beats our hydration.
+  private lastTheme: string | null = null;
 
   constructor() {
     if (typeof window !== "undefined") {
@@ -63,6 +68,20 @@ class KunfupayEmbed {
     return navigator.language || null;
   }
 
+  /**
+   * Resolves the theme the HOST wants the embedded app to render in,
+   * from `?theme=` (set by the Kunfupay dashboard when embedding).
+   * Returns the raw string ("light" | "dark" | "system" | anything);
+   * the caller validates it.
+   *
+   * There is no way to read the host's theme directly — the parent document
+   * is cross-origin — so an embedded app either gets told or guesses.
+   */
+  getThemeFromUrl(): string | null {
+    if (typeof window === "undefined") return null;
+    return new URLSearchParams(window.location.search).get("theme");
+  }
+
   onTokenReceived(cb: TokenCallback) {
     this.tokenCallbacks.push(cb);
   }
@@ -84,6 +103,26 @@ class KunfupayEmbed {
   }
 
   /**
+   * Subscribe to theme updates sent by the host via postMessage
+   * `{ type: "kunfupay:theme", payload: { theme } }` — fires when the user
+   * flips light/dark in the Kunfupay dashboard with the iframe already open.
+   */
+  onThemeReceived(cb: ThemeCallback): () => void {
+    this.themeCallbacks.push(cb);
+    if (this.lastTheme) {
+      cb(this.lastTheme);
+    }
+    return () => {
+      this.themeCallbacks = this.themeCallbacks.filter((c) => c !== cb);
+    };
+  }
+
+  /** Whether the host has already sent a `kunfupay:theme` message. */
+  hasReceivedTheme(): boolean {
+    return this.lastTheme !== null;
+  }
+
+  /**
    * Whether the host has already sent a `kunfupay:locale` message. Use this
    * to gate fallbacks (like `navigator.language`) so they don't fight with
    * the authoritative host locale.
@@ -101,6 +140,12 @@ class KunfupayEmbed {
       this.tokenCallbacks.forEach((cb) =>
         cb(msg.payload.token, msg.payload.expiresAt)
       );
+      return;
+    }
+
+    if (msg.type === "kunfupay:theme" && msg.payload?.theme) {
+      this.lastTheme = msg.payload.theme;
+      this.themeCallbacks.forEach((cb) => cb(msg.payload.theme));
       return;
     }
 

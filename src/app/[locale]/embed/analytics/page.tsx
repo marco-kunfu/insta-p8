@@ -4,7 +4,7 @@ import { Activity } from "lucide-react"
 
 export default function AnalyticsPage() {
     return (
-        <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-8 animate-in fade-in duration-700">
+        <div className="flex flex-col items-center justify-center py-24 text-center px-8 animate-in fade-in duration-700">
             <div className="w-20 h-20 rounded-2xl bg-accent-yellow/10 border border-accent-yellow/40 flex items-center justify-center mb-6">
                 <Activity className="w-10 h-10 text-accent-yellow-foreground dark:text-accent-yellow" />
             </div>

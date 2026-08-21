@@ -20,10 +20,65 @@ export function LandingPage() {
 
   const handleLogin = () => setPopupBlocked(startInstagramLogin(mode))
 
+  const popupNotice = popupBlocked ? (
+    <div className="border-b border-primary/30 bg-primary-soft px-5 py-4 md:px-10">
+      <p className="text-sm font-medium text-foreground">
+        Instagram no permite iniciar sesión dentro del panel de Kunfupay.
+      </p>
+      <p className="mt-1 text-[13px] text-muted-foreground">
+        Abre la app en una pestaña nueva para conectar tu cuenta:{" "}
+        <span className="font-mono-ui select-all break-all text-foreground">
+          {standaloneUrl()}
+        </span>
+      </p>
+    </div>
+  ) : null
+
   const handleTestLogin = () => {
     safeLocal.setItem("ig_user_id", "9999999999")
     safeLocal.setItem("ig_username", "test_creator")
     router.push(mode === "embed" ? "/embed" : "/dashboard")
+  }
+
+  // Embedded, with no Instagram account linked yet: the gate is a card, not
+  // the marketing page. A full-bleed hero (15vw type, marquee, feature grid)
+  // inside the host's content area is a stack of screens the seller has to
+  // scroll past to reach the one button that matters — and they are already
+  // sold: they installed the app.
+  if (mode === "embed") {
+    return (
+      <div className="bg-background text-foreground">
+        {popupNotice}
+        <div className="mx-auto max-w-xl px-5 py-14 text-center">
+          <div className="morfeo-avatar-gradient mx-auto mb-6 flex h-12 w-12 items-center justify-center rounded-xl text-white">
+            <Zap className="h-6 w-6" strokeWidth={2.5} aria-hidden="true" />
+          </div>
+          <h1 className="font-serif-display text-3xl md:text-4xl leading-tight">Connect your Instagram</h1>
+          <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-muted-foreground md:text-base">
+            Comment-to-DM funnels, keyword triggers, story replies and AI answers — with your
+            Kunfupay products one tap away in any conversation.
+          </p>
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+            <button
+              onClick={handleLogin}
+              className="morfeo-cta group flex items-center gap-2 rounded-full px-7 py-4 font-mono-ui text-sm font-bold shadow-lg hover:-translate-y-0.5 active:translate-y-0"
+            >
+              Connect Instagram
+              <ArrowUpRight className="h-4 w-4 transition-transform group-hover:rotate-45" aria-hidden="true" />
+            </button>
+            {process.env.NODE_ENV === "development" && (
+              <button
+                onClick={handleTestLogin}
+                className="group flex items-center gap-2 rounded-full border border-primary/25 px-7 py-4 font-mono-ui text-sm font-bold text-primary transition-all hover:bg-primary-soft active:scale-[0.98]"
+              >
+                <Terminal className="h-4 w-4" aria-hidden="true" />
+                Dev Login
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -39,19 +94,7 @@ export function LandingPage() {
           only reads as texture on a near-black surface. */}
       <div className="morfeo-atmosphere pointer-events-none fixed inset-0 z-0" />
 
-      {popupBlocked && (
-        <div className="relative z-50 border-b border-primary/30 bg-primary-soft px-5 py-4 md:px-10">
-          <p className="text-sm font-medium text-foreground">
-            Instagram no permite iniciar sesión dentro del panel de Kunfupay.
-          </p>
-          <p className="mt-1 text-[13px] text-muted-foreground">
-            Abre la app en una pestaña nueva para conectar tu cuenta:{" "}
-            <span className="font-mono-ui select-all break-all text-foreground">
-              {standaloneUrl()}
-            </span>
-          </p>
-        </div>
-      )}
+      {popupNotice}
 
       {/* Nav — Morfeo header height: 56px mobile, 64px desktop */}
       <nav className="relative z-50 flex items-center justify-between px-5 md:px-10 min-h-14 md:min-h-16 border-b border-border">

@@ -5,10 +5,20 @@ import { THEME_STORAGE_KEY as STORAGE_KEY } from "@/lib/brand"
 
 type Theme = "light" | "dark" | "system"
 
+type SetThemeOptions = {
+  /**
+   * Whether to remember the choice in localStorage. False for a theme the
+   * HOST dictated (embed mode): it is the dashboard's preference for this
+   * frame, not the user's preference for this app, and this origin's storage
+   * is shared with the standalone /dashboard tabs.
+   */
+  persist?: boolean
+}
+
 type ThemeContextValue = {
   theme: Theme
   resolvedTheme: "light" | "dark"
-  setTheme: (theme: Theme) => void
+  setTheme: (theme: Theme, options?: SetThemeOptions) => void
   toggle: () => void
 }
 
@@ -72,11 +82,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     return () => mq.removeEventListener("change", onChange)
   }, [theme])
 
-  const setTheme = React.useCallback((next: Theme) => {
+  const setTheme = React.useCallback((next: Theme, { persist = true }: SetThemeOptions = {}) => {
     const resolved = resolveTheme(next)
     applyTheme(resolved)
     setThemeState(next)
     setResolvedTheme(resolved)
+    if (!persist) return
     try {
       window.localStorage.setItem(STORAGE_KEY, next)
     } catch {}
