@@ -4,6 +4,7 @@ Lista de tareas pendientes para el desarrollo de esta app. Actualiza este archiv
 
 ## Pendiente
 
+- [ ] Pedir al host de Kunfupay que informe el tema del panel: `?theme=light|dark` al embeber y postMessage `{ type: "kunfupay:theme", payload: { theme } }` al cambiarlo. Hasta entonces el embed cae en `prefers-color-scheme`
 - [ ] Probar el flujo completo de login de Instagram desde el iframe en producción (conectar → pestaña → volver al panel) tras desplegar el fix de sesión por vendorId
 - [ ] Pedir a un admin de Kunfupay: capability `EXTERNAL_INTEGRATIONS_API_ACCESS`, eventos `external.*` en `allowedWebhookEvents`, `redirectUri` y `webhookUrl` (HTTPS) de la app
 - [ ] Probar `GET /api/kunfupay/me` desde una sesión embed real (valida credenciales + token + instalación + capability)
@@ -20,6 +21,7 @@ Lista de tareas pendientes para el desarrollo de esta app. Actualiza este archiv
 
 ## Completado
 
+- [x] Layout sin sidebar: una sola navegación horizontal (`PanelNav`) para `/embed` y `/dashboard`, accesible en iframe (links con `aria-current`, targets de 44px, `overscroll-contain`, skip link a `<main>`, anuncio de ruta) y sin `fixed`/`sticky`/unidades de viewport dentro del embed; tema del host en embed (`?theme=` + `kunfupay:theme`), toggle solo en standalone; gate de Instagram compacto dentro del iframe
 - [x] Modo por ruta (concepto one&one): `/embed/*` = iframe (handshake obligatorio), `/dashboard/*` = standalone (misma pestaña para el OAuth, nunca `window.close()`); `state` codifica modo+vendor y `/instagram-return` resuelve el retorno según el modo
 - [x] `DATABASE_URL`/`DIRECT_URL` configuradas y `db:push` aplicado (tablas `vendors`, `kunfupay_webhook_events` y columna `users.vendor_id` verificadas en producción)
 - [x] Sesión del embed resuelta por servidor (`GET/DELETE /api/instagram/account` por vendorId) en vez de localStorage — el storage del iframe está particionado por Chrome y no ve lo que escribe la pestaña de login

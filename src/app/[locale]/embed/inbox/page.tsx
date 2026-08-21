@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useInstagramSession } from "@/hooks/use-instagram-session"
+import { useVendor } from "@/components/kunfupay/embed-provider"
 import { ConversationList } from "@/components/inbox/ConversationList"
 import { ChatWindow } from "@/components/inbox/ChatWindow"
 import { Loader2 } from "lucide-react"
@@ -9,6 +10,10 @@ import { cn } from "@/lib/utils"
 
 export default function InboxPage() {
     const { userId, isLoading } = useInstagramSession()
+    // The chat needs a bounded height to scroll inside. Standalone can measure
+    // that against the viewport; embed cannot — the host sizes the iframe from
+    // our own scrollHeight, so a vh-based pane would chase its own tail.
+    const { mode } = useVendor()
     const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null)
     const [selectedRecipientName, setSelectedRecipientName] = useState<string | null>(null)
     const [selectedRecipientId, setSelectedRecipientId] = useState<string | null>(null)
@@ -21,7 +26,7 @@ export default function InboxPage() {
 
     if (isLoading) {
         return (
-            <div className="flex items-center justify-center min-h-[50vh]">
+            <div className="flex items-center justify-center py-24">
                 <Loader2 className="w-8 h-8 text-muted-foreground animate-spin" />
             </div>
         )
@@ -32,7 +37,12 @@ export default function InboxPage() {
     }
 
     return (
-        <div className="h-[calc(100vh-2rem)] rounded-2xl overflow-hidden border border-border bg-card backdrop-blur-xl shadow-2xl flex relative">
+        <div className={cn(
+            // Margin, not a padded wrapper: the pane's own height must stay
+            // exactly what the class below says.
+            "m-3 md:m-6 rounded-2xl overflow-hidden border border-border bg-card backdrop-blur-xl shadow-2xl flex relative",
+            mode === "embed" ? "h-[620px]" : "h-[calc(100dvh-9rem)] min-h-[520px]",
+        )}>
             {/* Left Sidebar: Conversation List */}
             <div className={cn(
                 "w-full md:w-[350px] flex-shrink-0 border-r border-border bg-muted absolute md:static inset-0 z-10 transition-transform duration-300 md:translate-x-0 h-full",
