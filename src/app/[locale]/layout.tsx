@@ -47,7 +47,8 @@ const themeBootstrap = `
     var isEmbed = window.location.pathname.split('/').indexOf('embed') !== -1;
     var theme;
     if (isEmbed) {
-      var hosted = new URLSearchParams(window.location.search).get('theme');
+      var params = new URLSearchParams(window.location.search);
+      var hosted = params.get('kunfupay_theme') || params.get('theme');
       theme = (hosted === 'light' || hosted === 'dark') ? hosted : 'system';
     } else {
       var stored = window.localStorage.getItem('${THEME_STORAGE_KEY}');
