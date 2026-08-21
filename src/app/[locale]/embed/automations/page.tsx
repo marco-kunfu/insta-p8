@@ -109,14 +109,14 @@ export default function AutomationsPage() {
 
     if (isSessionLoading) {
         return (
-            <div className="h-screen flex items-center justify-center bg-background">
+            <div className="flex items-center justify-center py-24 bg-background">
                 <div className="w-6 h-6 border-2 border-border border-t-primary rounded-full animate-spin" />
             </div>
         )
     }
     if (!userId) {
         return (
-            <div className="h-screen flex items-center justify-center bg-background text-muted-foreground">
+            <div className="flex items-center justify-center py-24 bg-background text-muted-foreground">
                 Please log in
             </div>
         )
@@ -136,7 +136,7 @@ export default function AutomationsPage() {
     ]
 
     return (
-        <div className="min-h-screen bg-background text-foreground">
+        <div className="bg-background text-foreground">
             <div className="max-w-5xl mx-auto px-4 md:px-8 py-8 space-y-8">
                 {/* Header */}
                 <div className="flex items-end justify-between gap-4 flex-wrap">

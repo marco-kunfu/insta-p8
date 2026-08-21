@@ -35,11 +35,24 @@ export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }))
 }
 
+// Pre-hydration theme resolution. It must agree with ThemeProvider AND with
+// HostThemeSync: under /embed the theme is the host's (?theme=, else the OS
+// preference), everywhere else it is the stored preference. Getting this wrong
+// shows as a flash of the wrong theme inside the Kunfupay dashboard.
 const themeBootstrap = `
 (function() {
   try {
-    var stored = window.localStorage.getItem('${THEME_STORAGE_KEY}');
-    var theme = (stored === 'light' || stored === 'dark' || stored === 'system') ? stored : 'light';
+    // Path segments, not a regex: this string is a template literal, so any
+    // backslash escape here collapses before the browser ever parses it.
+    var isEmbed = window.location.pathname.split('/').indexOf('embed') !== -1;
+    var theme;
+    if (isEmbed) {
+      var hosted = new URLSearchParams(window.location.search).get('theme');
+      theme = (hosted === 'light' || hosted === 'dark') ? hosted : 'system';
+    } else {
+      var stored = window.localStorage.getItem('${THEME_STORAGE_KEY}');
+      theme = (stored === 'light' || stored === 'dark' || stored === 'system') ? stored : 'light';
+    }
     var resolved = theme === 'system'
       ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
       : theme;

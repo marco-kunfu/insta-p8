@@ -19,7 +19,7 @@ A KunfuApp: Instagram DM automation (inbox, keyword automations, ice breakers, A
 
 ### Integration layer (DO NOT modify unless necessary)
 
-- `src/lib/kunfupay-embed-sdk.ts` — Client-side iframe communication (postMessage). Singleton `kunfupayEmbed`: `ready()`, `resize()`, `autoResize()`, `navigate()`, `close()`, `getTokenFromUrl()`, `onTokenReceived()`, `getLocaleFromUrl()`, `onLocaleReceived()`, `hasReceivedLocale()`.
+- `src/lib/kunfupay-embed-sdk.ts` — Client-side iframe communication (postMessage). Singleton `kunfupayEmbed`: `ready()`, `resize()`, `autoResize()`, `navigate()`, `close()`, `getTokenFromUrl()`, `onTokenReceived()`, `getLocaleFromUrl()`, `onLocaleReceived()`, `hasReceivedLocale()`, `getThemeFromUrl()`, `onThemeReceived()`, `hasReceivedTheme()`.
 - `src/lib/kunfupay.ts` — Server-side Kunfupay API client: `verifyEmbedToken()`, `verifyWebhookSignature()`, `listSales()`, `getSale()`, `getProduct()`. Env: `KUNFUPAY_API_BASE`, `KUNFUPAY_CLIENT_ID`, `KUNFUPAY_CLIENT_SECRET`.
 - `src/middleware.ts` — CORS for `/api/*` (iframe sandbox has origin "null") + `next-intl` locale routing.
 - `src/lib/db.ts` — Prisma client singleton.
@@ -28,11 +28,13 @@ A KunfuApp: Instagram DM automation (inbox, keyword automations, ice breakers, A
 - `src/i18n/{routing,request,navigation}.ts` — `next-intl`: locales `es`, `en`, `fr`, `pt`, default `es`, `localePrefix: "as-needed"`.
 - `src/app/layout.tsx` — minimal root; the real `<html>`/`<body>` shell (fonts, theme bootstrap, providers) lives in `src/app/[locale]/layout.tsx`.
 - `src/components/kunfupay/embed-provider.tsx` — embed handshake (token → vendorId → `ready()`), iframe auto-resize, host locale sync. Exposes `useVendor()`.
+- `src/components/kunfupay/host-theme-sync.tsx` — in embed mode the theme belongs to the host: `?theme=` on load, live updates via postMessage `kunfupay:theme`, `prefers-color-scheme` when the host says nothing. Never persisted.
 
 ### App-specific layer
 
 - `prisma/schema.prisma` — `Vendor` is the root. `InstagramAccount` (table `users`, id = Instagram user id) hangs off `Vendor` via `vendorId`; everything else (conversations, messages, automations, media_cache, ice_breakers, content_pool, scheduler_config, reels_posts) hangs off `InstagramAccount`. `dm_queue` and `unlock_attempts` have no FK on purpose.
 - `src/app/[locale]/embed/` — the app UI (former dashboard): overview, inbox, automations, ice-breakers, analytics, settings.
+- `src/components/layout/` — the panel chrome: `panel-shell.tsx` (gate + skip link + `<main>`), `panel-header.tsx`, `panel-nav.tsx`, `route-announcer.tsx`, `nav-items.ts` (single source of truth for the sections).
 - `src/app/api/` — app routes (instagram/*, inbox/*, automations, ice-breakers, groq/*, dashboard/stats, kunfupay/products). NOT localized.
 - `src/lib/kunfupay-products.ts` — legacy vendor-key client for the Kunfupay products API (X-API-Key), used for DM card buttons. Distinct from `src/lib/kunfupay.ts`.
 - `messages/{es,en,fr,pt}.json` — translations (keep all four in sync).
@@ -46,6 +48,10 @@ A KunfuApp: Instagram DM automation (inbox, keyword automations, ice breakers, A
 - **CORS is open (`*`)** — intentional, required by the iframe sandbox.
 - **Instagram account linking**: the OAuth callback (`/api/instagram/callback`) receives the `vendorId` from the embed session (round-tripped through the OAuth `state` param) and stamps it on the `users` row.
 - **Panel mode is decided BY ROUTE** (the one&one concept, no `window.top` sniffing): `/embed/*` is always embed mode (Kunfupay handshake required), `/dashboard/*` is always standalone. Both render the same pages — `/dashboard` pages re-export `/embed` pages and each layout mounts the matching vendor provider around the shared `PanelShell`. `useVendor()` exposes `{ vendorId, mode }`.
+- **One horizontal navigation, no sidebar** — the panel chrome is a single scrollable row of section links (`PanelNav`), the same on both surfaces. The old sidebar+topbar dashboard shell cannot work inside the iframe: the host sizes the frame from our `scrollHeight`, so there is no viewport for `fixed`/`sticky` to attach to, and a 256px rail eats a third of the width. **Never use `sticky`, `fixed` or viewport units (`vh`/`dvh`/`svh`) in anything the embed renders** — a vh-based height inside an auto-resized iframe measures the height the host just derived from our content. Standalone-only branches may use `dvh` (see the inbox pane).
+- **Chrome differences by mode**: embed hides the brand lockup (the Kunfupay dashboard already frames us) and the theme toggle (the host owns the theme); standalone shows both. Everything else is shared.
+- **Accessibility of the embed nav**: real links in a labelled `<nav>` with `aria-current="page"` (not `role="tab"`), 44px targets, `overscroll-contain` so a horizontal flick doesn't scroll the host page, a "Skip to content" link into `<main id="panel-content">`, and `RouteAnnouncer` — inside an iframe the host owns the document the screen reader tracks, so client-side route changes are otherwise silent.
+- **The Instagram gate is a card in embed**, the marketing page only standalone (`LandingPage` branches on mode).
 - **Session resolution by mode**: embed → server truth, `GET /api/instagram/account?vendorId=...` (the iframe's localStorage is partitioned by Chrome and shared with standalone tabs, so it can't be trusted). Standalone → localStorage. See `src/hooks/use-instagram-session.ts`.
 - **OAuth by mode**: standalone logs in on the SAME tab (`location.href`) and returns to `/dashboard`; embed opens a separate tab. The `state` param encodes mode + vendor (`e:<vendorId>` / `s:<vendorId?>`) and the callback GET lands on `/instagram-return`, which finishes the exchange and either notifies the iframe and closes (embed) or continues in place (standalone). Notifications go through `src/lib/instagram-link-events.ts` (BroadcastChannel + storage ping + `window.opener` postMessage) and the embed also re-checks on window focus — the only signal that always survives.
 
